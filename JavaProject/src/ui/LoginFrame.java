@@ -1,59 +1,98 @@
-package src.ui; // Package declaration
+package src.ui;
 
-import java.awt.*; // Import DB helper
-import java.sql.*; // Import Swing UI classes
-import javax.swing.*; // Import layout classes
-import src.db.DatabaseConnection; // Import JDBC classes
+import java.awt.*;
+import javax.swing.*;
+import src.dao.UserDAO;
+import src.models.User;
 
-public class LoginFrame extends JFrame { // Login window
-    private JTextField txtUser; // Text field for username
-    private JPasswordField txtPass; // Password field
-    private JButton btnLogin; // Login button
+public class LoginFrame extends JFrame {
+    private JTextField txtEmail;
+    private JPasswordField txtPass;
+    private JButton btnLogin;
+    private JButton btnRegister;
+    private UserDAO userDAO;
 
-    public LoginFrame() { // Constructor
-        setTitle("Login - E-Commerce"); // Window title
-        setSize(300, 180); // Window size
-        setLayout(new GridLayout(3, 2)); // Layout with 3 rows, 2 columns
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Close app when window closes
-        setLocationRelativeTo(null); // Center window
+    public LoginFrame() {
+        userDAO = new UserDAO();
+        
+        setTitle("Login - Sales & Inventory System");
+        setSize(400, 250);
+        setLayout(new BorderLayout());
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        // Title Panel
+        JPanel titlePanel = new JPanel();
+        JLabel titleLabel = new JLabel("Sales & Inventory Management");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titlePanel.add(titleLabel);
+        
+        // Form Panel
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
+        
+        formPanel.add(new JLabel("Email:"));
+        txtEmail = new JTextField();
+        formPanel.add(txtEmail);
 
-        add(new JLabel("Username:")); // Label for username
-        txtUser = new JTextField(); // Input field
-        add(txtUser); // Add to layout
+        formPanel.add(new JLabel("Password:"));
+        txtPass = new JPasswordField();
+        formPanel.add(txtPass);
+        
+        btnLogin = new JButton("Login");
+        btnRegister = new JButton("Register");
+        formPanel.add(btnLogin);
+        formPanel.add(btnRegister);
 
-        add(new JLabel("Password:")); // Label for password
-        txtPass = new JPasswordField(); // Input field
-        add(txtPass);
+        // Add panels
+        add(titlePanel, BorderLayout.NORTH);
+        add(formPanel, BorderLayout.CENTER);
+        
+        // Action listeners
+        btnLogin.addActionListener(e -> login());
+        btnRegister.addActionListener(e -> openRegisterFrame());
+        
+        // Enter key to login
+        txtPass.addActionListener(e -> login());
 
-        btnLogin = new JButton("Login"); // Create login button
-        add(new JLabel()); // Empty placeholder
-        add(btnLogin); // Add button to layout
-
-        btnLogin.addActionListener(e -> login()); // When clicked, call login method
-
-        setVisible(true); // Show window
+        setVisible(true);
     }
 
-    private void login() { // Method to validate login
-        String username = txtUser.getText(); // Get username text
-        String password = String.valueOf(txtPass.getPassword()); // Get password text
-
-        try (Connection conn = DatabaseConnection.getConnection()) { // Open DB connection
-            PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM users WHERE username=? AND password=?"); // SQL query
-            ps.setString(1, username); // 1 – This refers to the position of the parameter in the SQL query.
-            ps.setString(2, password); // Set password parameter
-            ResultSet rs = ps.executeQuery(); // Execute query
-
-            if (rs.next()) { // If a row exists, login success
-                JOptionPane.showMessageDialog(this, "Login Successful!"); // Show success message
-                dispose(); // Close login window
-                new ProductFrame(); // Open product management window
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials!"); // Show error
-            }
-        } catch (Exception e) {
-            e.printStackTrace(); // Print DB errors
+    private void login() {
+        String email = txtEmail.getText().trim();
+        String password = String.valueOf(txtPass.getPassword());
+        
+        if (email.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter email and password!", 
+                "Input Required", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+
+        User user = userDAO.authenticateUser(email, password);
+        
+        if (user != null) {
+            JOptionPane.showMessageDialog(this, "Login Successful!\nWelcome, " + user.getName(), 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+            
+            if (user.isAdmin()) {
+                new AdminDashboard(user);
+            } else {
+                new CustomerDashboard(user);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid email or password!", 
+                "Login Failed", JOptionPane.ERROR_MESSAGE);
+            txtPass.setText("");
+        }
+    }
+    
+    private void openRegisterFrame() {
+        new RegisterFrame(this);
+        setVisible(false);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new LoginFrame());
     }
 }

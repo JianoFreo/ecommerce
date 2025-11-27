@@ -1,0 +1,46 @@
+# Compiled class files
+*.class
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# IDE specific files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build directories
+build/
+dist/
+target/
+out/
+
+# Database configuration (if sensitive)
+# DatabaseConnection.java
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
