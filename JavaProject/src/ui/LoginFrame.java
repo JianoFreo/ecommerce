@@ -17,7 +17,7 @@ public class LoginFrame extends JFrame { // Login window
         setDefaultCloseOperation(EXIT_ON_CLOSE); // Close app when window closes
         setLocationRelativeTo(null); // Center window
 
-        add(new JLabel("Username:")); // Label for username
+        add(new JLabel("Email:")); // Label for email
         txtUser = new JTextField(); // Input field
         add(txtUser); // Add to layout
 
@@ -26,34 +26,57 @@ public class LoginFrame extends JFrame { // Login window
         add(txtPass);
 
         btnLogin = new JButton("Login"); // Create login button
-        add(new JLabel()); // Empty placeholder
+        JButton btnRegister = new JButton("Register"); // Create register button
         add(btnLogin); // Add button to layout
+        add(btnRegister); // Add register button
 
         btnLogin.addActionListener(e -> login()); // When clicked, call login method
+        btnRegister.addActionListener(e -> {
+            dispose();
+            new RegistrationFrame();
+        });
 
         setVisible(true); // Show window
     }
 
     private void login() { // Method to validate login
-        String username = txtUser.getText(); // Get username text
+        String email = txtUser.getText(); // Get email text
         String password = String.valueOf(txtPass.getPassword()); // Get password text
 
         try (Connection conn = DatabaseConnection.getConnection()) { // Open DB connection
             PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM users WHERE username=? AND password=?"); // SQL query
-            ps.setString(1, username); // 1 – This refers to the position of the parameter in the SQL query.
+                "SELECT * FROM users WHERE email=? AND password=?"); // SQL query
+            ps.setString(1, email); // Set email parameter
             ps.setString(2, password); // Set password parameter
             ResultSet rs = ps.executeQuery(); // Execute query
 
             if (rs.next()) { // If a row exists, login success
-                JOptionPane.showMessageDialog(this, "Login Successful!"); // Show success message
+                // Create User object
+                src.model.User user = new src.model.User(
+                    rs.getInt("userID"),
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("address"),
+                    rs.getString("phoneNumber"),
+                    rs.getString("role")
+                );
+                
+                JOptionPane.showMessageDialog(this, "Login Successful! Welcome " + user.getName()); 
                 dispose(); // Close login window
-                new ProductFrame(); // Open product management window
+                
+                // Open appropriate dashboard based on role
+                if ("Admin".equals(user.getRole())) {
+                    new AdminDashboard(user); // Open admin dashboard
+                } else {
+                    new CustomerDashboard(user); // Open customer dashboard
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid credentials!"); // Show error
             }
         } catch (Exception e) {
             e.printStackTrace(); // Print DB errors
+            JOptionPane.showMessageDialog(this, "Login error: " + e.getMessage());
         }
     }
 }

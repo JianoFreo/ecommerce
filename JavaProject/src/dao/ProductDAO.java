@@ -12,37 +12,98 @@ import src.model.Product; // Import List, ArrayList
 
 public class ProductDAO { // DAO class for database operations
 
-    // Retrieve all products from the database
+    // Retrieve all products from the database with category info
     public List<Product> getAllProducts() {
-        List<Product> products = new ArrayList<>(); // Create empty list
-        try (Connection conn = DatabaseConnection.getConnection()) { // Open DB connection
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM products"); // Prepare SQL query
-            ResultSet rs = ps.executeQuery(); // Execute query and get result set
-            while (rs.next()) { // Iterate through rows
-                products.add(new Product( // Create Product object from row
-                    rs.getInt("id"), // Get id column
-                    rs.getString("name"), // Get name column
-                    rs.getDouble("price"), // Get price column
-                    rs.getInt("quantity") // Get quantity column
-                ));
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT p.*, c.name as categoryName FROM products p " +
+                        "LEFT JOIN categories c ON p.categoryID = c.categoryID";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Product product = new Product(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getDouble("price"),
+                    rs.getInt("quantity"),
+                    rs.getInt("categoryID")
+                );
+                product.setCategoryName(rs.getString("categoryName"));
+                products.add(product);
             }
-        } catch (Exception e) { // Catch SQL errors
-            e.printStackTrace(); // Print error
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return products; // Return list of products
+        return products;
+    }
+
+    // Get products by category
+    public List<Product> getProductsByCategory(int categoryID) {
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT p.*, c.name as categoryName FROM products p " +
+                "LEFT JOIN categories c ON p.categoryID = c.categoryID WHERE p.categoryID=?");
+            ps.setInt(1, categoryID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Product product = new Product(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getDouble("price"),
+                    rs.getInt("quantity"),
+                    rs.getInt("categoryID")
+                );
+                product.setCategoryName(rs.getString("categoryName"));
+                products.add(product);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    // Get low stock products (quantity < 10)
+    public List<Product> getLowStockProducts() {
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT p.*, c.name as categoryName FROM products p " +
+                "LEFT JOIN categories c ON p.categoryID = c.categoryID WHERE p.quantity < 10");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Product product = new Product(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getDouble("price"),
+                    rs.getInt("quantity"),
+                    rs.getInt("categoryID")
+                );
+                product.setCategoryName(rs.getString("categoryName"));
+                products.add(product);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return products;
     }
 
     // Add a product to the database
     public void addProduct(Product product) {
-        try (Connection conn = DatabaseConnection.getConnection()) { // Open DB connection
+        try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)"); // SQL insert with placeholders
-            ps.setString(1, product.getName()); // Set name
-            ps.setDouble(2, product.getPrice()); // Set price
-            ps.setInt(3, product.getQuantity()); // Set quantity
-            ps.executeUpdate(); // Execute insert
+                "INSERT INTO products (name, description, price, quantity, categoryID) VALUES (?, ?, ?, ?, ?)");
+            ps.setString(1, product.getName());
+            ps.setString(2, product.getDescription());
+            ps.setDouble(3, product.getPrice());
+            ps.setInt(4, product.getQuantity());
+            ps.setInt(5, product.getCategoryID());
+            ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace(); // Print error
+            e.printStackTrace();
         }
     }
 
@@ -50,14 +111,16 @@ public class ProductDAO { // DAO class for database operations
     public void updateProduct(Product product) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(
-                "UPDATE products SET name=?, price=?, quantity=? WHERE id=?"); // SQL update
-            ps.setString(1, product.getName()); // Set name
-            ps.setDouble(2, product.getPrice()); // Set price
-            ps.setInt(3, product.getQuantity()); // Set quantity
-            ps.setInt(4, product.getId()); // Set id to update
-            ps.executeUpdate(); // Execute update
+                "UPDATE products SET name=?, description=?, price=?, quantity=?, categoryID=? WHERE id=?");
+            ps.setString(1, product.getName());
+            ps.setString(2, product.getDescription());
+            ps.setDouble(3, product.getPrice());
+            ps.setInt(4, product.getQuantity());
+            ps.setInt(5, product.getCategoryID());
+            ps.setInt(6, product.getId());
+            ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace(); // Print error
+            e.printStackTrace();
         }
     }
 
