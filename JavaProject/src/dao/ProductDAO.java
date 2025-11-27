@@ -5,10 +5,10 @@ package src.dao; // Package declaration
 In simpler terms:
 
 The DAO acts as a “middleman” between your Java code and your database. */
-import src.model.Product; // Import Product class
-import src.db.DatabaseConnection; // Import DatabaseConnection class
-import java.sql.*; // Import JDBC classes
-import java.util.*; // Import List, ArrayList
+import java.sql.*; // Import Product class
+import java.util.*; // Import DatabaseConnection class
+import src.db.DatabaseConnection; // Import JDBC classes
+import src.model.Product; // Import List, ArrayList
 
 public class ProductDAO { // DAO class for database operations
 

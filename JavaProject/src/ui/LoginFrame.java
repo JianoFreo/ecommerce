@@ -1,9 +1,9 @@
 package src.ui; // Package declaration
 
-import src.db.DatabaseConnection; // Import DB helper
-import javax.swing.*; // Import Swing UI classes
-import java.awt.*; // Import layout classes
-import java.sql.*; // Import JDBC classes
+import java.awt.*; // Import DB helper
+import java.sql.*; // Import Swing UI classes
+import javax.swing.*; // Import layout classes
+import src.db.DatabaseConnection; // Import JDBC classes
 
 public class LoginFrame extends JFrame { // Login window
     private JTextField txtUser; // Text field for username
