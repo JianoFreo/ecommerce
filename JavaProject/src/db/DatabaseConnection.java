@@ -3,7 +3,7 @@ package src.db; // Package declaration
 import java.sql.*; // Import JDBC classes: Connection, DriverManager, PreparedStatement, ResultSet, etc.
 
 public class DatabaseConnection { // Class that handles database connections
-    private static final String URL = "jdbc:mysql://localhost:3306/is2bdb"; // MySQL connection string
+    private static final String URL = "jdbc:mysql://localhost:3306/ecommercedb"; // MySQL connection string
     private static final String USER = "root"; // Database username
     private static final String PASSWORD = "root"; // Database password (change if needed)
 
