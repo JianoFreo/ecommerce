@@ -3,12 +3,80 @@ package src.dao;
 import java.sql.*;
 import java.util.*;
 import src.db.DatabaseConnection;
-import src.model.Order;
-import src.model.OrderItem;
 import src.model.Cart;
 import src.model.CartItem;
+import src.model.Order;
+import src.model.OrderItem;
 
 public class OrderDAO {
+
+    // CREATE - Place order directly with items
+    public boolean createOrder(Order order) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false); // Start transaction
+            
+            // Create order
+            PreparedStatement orderPs = conn.prepareStatement(
+                "INSERT INTO orders (userID, orderDate, status, totalAmount, shippingAddress) " +
+                "VALUES (?, NOW(), ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS);
+            orderPs.setInt(1, order.getUserID());
+            orderPs.setString(2, order.getStatus());
+            orderPs.setDouble(3, order.getTotalAmount());
+            orderPs.setString(4, order.getShippingAddress());
+            orderPs.executeUpdate();
+            
+            ResultSet generatedKeys = orderPs.getGeneratedKeys();
+            int orderID = -1;
+            if (generatedKeys.next()) {
+                orderID = generatedKeys.getInt(1);
+            }
+            
+            // Add order items
+            PreparedStatement itemPs = conn.prepareStatement(
+                "INSERT INTO order_items (orderID, productID, price, quantity) VALUES (?, ?, ?, ?)");
+            
+            for (OrderItem item : order.getItems()) {
+                itemPs.setInt(1, orderID);
+                itemPs.setInt(2, item.getProductID());
+                itemPs.setDouble(3, item.getPrice());
+                itemPs.setInt(4, item.getQuantity());
+                itemPs.executeUpdate();
+                
+                // Update product quantity
+                PreparedStatement updateProductPs = conn.prepareStatement(
+                    "UPDATE products SET quantity = quantity - ? WHERE id = ?");
+                updateProductPs.setInt(1, item.getQuantity());
+                updateProductPs.setInt(2, item.getProductID());
+                updateProductPs.executeUpdate();
+            }
+            
+            conn.commit(); // Commit transaction
+            return true;
+            
+        } catch (Exception e) {
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback on error
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     // CREATE - Place order from cart
     public int createOrder(int userID, String shippingAddress, Cart cart) {

@@ -1,57 +1,60 @@
-package src.ui; // Package declaration
+package src.ui;
 
-import java.awt.*; // Import DB helper
-import java.sql.*; // Import Swing UI classes
-import javax.swing.*; // Import layout classes
-import src.db.DatabaseConnection; // Import JDBC classes
+import java.awt.*;
+import java.sql.*;
+import javax.swing.*;
+import src.db.DatabaseConnection;
 
-public class LoginFrame extends JFrame { // Login window
-    private JTextField txtUser; // Text field for username
-    private JPasswordField txtPass; // Password field
-    private JButton btnLogin; // Login button
+public class LoginFrame extends JFrame {
+    private JTextField txtUser;
+    private JPasswordField txtPass;
 
-    public LoginFrame() { // Constructor
-        setTitle("Login - E-Commerce"); // Window title
-        setSize(300, 180); // Window size
-        setLayout(new GridLayout(3, 2)); // Layout with 3 rows, 2 columns
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Close app when window closes
-        setLocationRelativeTo(null); // Center window
+    public LoginFrame() {
+        setTitle("E-Commerce Management System");
+        setSize(400, 250);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        add(new JLabel("Email:")); // Label for email
-        txtUser = new JTextField(); // Input field
-        add(txtUser); // Add to layout
+        // Login Panel
+        JPanel loginPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        loginPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        loginPanel.add(new JLabel("Email:"));
+        txtUser = new JTextField();
+        loginPanel.add(txtUser);
 
-        add(new JLabel("Password:")); // Label for password
-        txtPass = new JPasswordField(); // Input field
-        add(txtPass);
+        loginPanel.add(new JLabel("Password:"));
+        txtPass = new JPasswordField();
+        loginPanel.add(txtPass);
 
-        btnLogin = new JButton("Login"); // Create login button
-        JButton btnRegister = new JButton("Register"); // Create register button
-        add(btnLogin); // Add button to layout
-        add(btnRegister); // Add register button
+        JButton btnLogin = new JButton("Login");
+        JButton btnRegister = new JButton("Register");
+        loginPanel.add(btnLogin);
+        loginPanel.add(btnRegister);
 
-        btnLogin.addActionListener(e -> login()); // When clicked, call login method
+        btnLogin.addActionListener(e -> login());
         btnRegister.addActionListener(e -> {
             dispose();
             new RegistrationFrame();
         });
 
-        setVisible(true); // Show window
+        add(loginPanel, BorderLayout.CENTER);
+        setVisible(true);
     }
 
-    private void login() { // Method to validate login
-        String email = txtUser.getText(); // Get email text
-        String password = String.valueOf(txtPass.getPassword()); // Get password text
+    private void login() {
+        String email = txtUser.getText();
+        String password = String.valueOf(txtPass.getPassword());
 
-        try (Connection conn = DatabaseConnection.getConnection()) { // Open DB connection
+        try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM users WHERE email=? AND password=?"); // SQL query
-            ps.setString(1, email); // Set email parameter
-            ps.setString(2, password); // Set password parameter
-            ResultSet rs = ps.executeQuery(); // Execute query
+                "SELECT * FROM users WHERE email=? AND password=?");
+            ps.setString(1, email);
+            ps.setString(2, password);
+            ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) { // If a row exists, login success
-                // Create User object
+            if (rs.next()) {
                 src.model.User user = new src.model.User(
                     rs.getInt("userID"),
                     rs.getString("name"),
@@ -62,20 +65,16 @@ public class LoginFrame extends JFrame { // Login window
                     rs.getString("role")
                 );
                 
-                JOptionPane.showMessageDialog(this, "Login Successful! Welcome " + user.getName()); 
-                dispose(); // Close login window
+                JOptionPane.showMessageDialog(this, "Login Successful! Welcome " + user.getName());
+                dispose();
                 
-                // Open appropriate dashboard based on role
-                if ("Admin".equals(user.getRole())) {
-                    new AdminDashboard(user); // Open admin dashboard
-                } else {
-                    new CustomerDashboard(user); // Open customer dashboard
-                }
+                // Open simple main menu
+                new MainMenuFrame(user);
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials!"); // Show error
+                JOptionPane.showMessageDialog(this, "Invalid credentials!");
             }
         } catch (Exception e) {
-            e.printStackTrace(); // Print DB errors
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Login error: " + e.getMessage());
         }
     }
