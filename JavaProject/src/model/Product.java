@@ -4,7 +4,8 @@ public class Product { // Product class represents a product entity
     private int id; // Product ID
     private String name; // Product name
     private String description; // Product description
-    private double price; // Product price
+    private double costPrice; // Cost price (how much you bought it for)
+    private double price; // Selling price (how much you sell it for)
     private int quantity; // Product quantity
     private int categoryID; // Foreign key to category
     private String categoryName; // Category name (for display)
@@ -20,10 +21,11 @@ public class Product { // Product class represents a product entity
     }
 
     // Constructor with all fields
-    public Product(int id, String name, String description, double price, int quantity, int categoryID) {
+    public Product(int id, String name, String description, double costPrice, double price, int quantity, int categoryID) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.costPrice = costPrice;
         this.price = price;
         this.quantity = quantity;
         this.categoryID = categoryID;
@@ -39,8 +41,22 @@ public class Product { // Product class represents a product entity
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
+    public double getCostPrice() { return costPrice; }
+    public void setCostPrice(double costPrice) { this.costPrice = costPrice; }
+
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    // Calculate profit margin
+    public double getProfit() {
+        return price - costPrice;
+    }
+
+    // Calculate profit percentage
+    public double getProfitMargin() {
+        if (costPrice == 0) return 0;
+        return ((price - costPrice) / costPrice) * 100;
+    }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }

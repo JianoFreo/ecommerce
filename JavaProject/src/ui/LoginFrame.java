@@ -68,8 +68,8 @@ public class LoginFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Login Successful! Welcome " + user.getName());
                 dispose();
                 
-                // Open simple main menu
-                new MainMenuFrame(user);
+                // Open Facebook-style main frame
+                new FacebookStyleFrame(user);
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid credentials!");
             }
