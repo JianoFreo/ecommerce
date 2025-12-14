@@ -4,7 +4,8 @@ public class Product { // Product class represents a product entity
     private int id; // Product ID
     private String name; // Product name
     private String description; // Product description
-    private double price; // Product price
+    private double price; // Product selling price
+    private double costPrice; // Product cost price (supplier price)
     private int quantity; // Product quantity
     private int categoryID; // Foreign key to category
     private String categoryName; // Category name (for display)
@@ -17,6 +18,7 @@ public class Product { // Product class represents a product entity
         this.name = name;
         this.price = price;
         this.quantity = quantity;
+        this.costPrice = 0;
     }
 
     // Constructor with all fields
@@ -24,6 +26,18 @@ public class Product { // Product class represents a product entity
         this.id = id;
         this.name = name;
         this.description = description;
+        this.price = price;
+        this.quantity = quantity;
+        this.categoryID = categoryID;
+        this.costPrice = 0;
+    }
+
+    // Constructor with cost price and selling price
+    public Product(int id, String name, String description, double costPrice, double price, int quantity, int categoryID) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.costPrice = costPrice;
         this.price = price;
         this.quantity = quantity;
         this.categoryID = categoryID;
@@ -41,6 +55,18 @@ public class Product { // Product class represents a product entity
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    public double getCostPrice() { return costPrice; }
+    public void setCostPrice(double costPrice) { this.costPrice = costPrice; }
+
+    public double getProfit() { 
+        return price - costPrice; 
+    }
+
+    public double getProfitMargin() {
+        if (costPrice == 0) return 0;
+        return ((price - costPrice) / costPrice) * 100;
+    }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -61,7 +87,9 @@ public class Product { // Product class represents a product entity
         return "Product{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", price=" + price +
+                ", costPrice=" + costPrice +
+                ", sellingPrice=" + price +
+                ", profit=" + getProfit() +
                 ", quantity=" + quantity +
                 '}';
     }

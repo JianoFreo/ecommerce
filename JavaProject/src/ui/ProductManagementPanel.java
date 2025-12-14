@@ -1,19 +1,20 @@
 package src.ui;
 
-import src.dao.ProductDAO;
-import src.dao.CategoryDAO;
-import src.model.Product;
-import src.model.Category;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.*;
+import src.dao.CategoryDAO;
+import src.dao.ProductDAO;
+import src.model.Category;
+import src.model.Product;
 
 public class ProductManagementPanel extends JPanel {
     private JTable table;
     private DefaultTableModel model;
-    private JTextField txtName, txtDesc, txtPrice, txtQty;
+    private JTextField txtName, txtDesc, txtPrice, txtQty, txtCostPrice;
+    private JLabel lblProfit;
     private JComboBox<Category> cmbCategory;
     private ProductDAO productDAO;
     private CategoryDAO categoryDAO;
@@ -32,7 +33,7 @@ public class ProductManagementPanel extends JPanel {
 
         // Table setup
         model = new DefaultTableModel(
-            new String[]{"ID", "Name", "Description", "Price", "Quantity", "Category"}, 0) {
+            new String[]{"ID", "Name", "Category", "Cost Price", "Selling Price", "Profit", "Quantity"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -46,11 +47,12 @@ public class ProductManagementPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Form panel
-        JPanel formPanel = new JPanel(new GridLayout(6, 2, 5, 5));
+        JPanel formPanel = new JPanel(new GridLayout(7, 2, 5, 5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Product Details"));
 
         txtName = new JTextField();
         txtDesc = new JTextField();
+        txtCostPrice = new JTextField();
         txtPrice = new JTextField();
         txtQty = new JTextField();
         cmbCategory = new JComboBox<>();
@@ -60,8 +62,14 @@ public class ProductManagementPanel extends JPanel {
         formPanel.add(txtName);
         formPanel.add(new JLabel("Description:"));
         formPanel.add(txtDesc);
-        formPanel.add(new JLabel("Price:"));
+        formPanel.add(new JLabel("Cost Price (from Supplier):"));
+        formPanel.add(txtCostPrice);
+        formPanel.add(new JLabel("Selling Price:"));
         formPanel.add(txtPrice);
+        formPanel.add(new JLabel("Profit:"));
+        lblProfit = new JLabel("₱0.00");
+        lblProfit.setFont(new Font("Arial", Font.BOLD, 12));
+        formPanel.add(lblProfit);
         formPanel.add(new JLabel("Quantity:"));
         formPanel.add(txtQty);
         formPanel.add(new JLabel("Category:"));
@@ -91,25 +99,48 @@ public class ProductManagementPanel extends JPanel {
 
         add(formPanel, BorderLayout.SOUTH);
 
+        // Add listeners to calculate profit
+        txtCostPrice.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) { calculateProfit(); }
+        });
+        txtPrice.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) { calculateProfit(); }
+        });
+
         // Table selection listener
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int row = table.getSelectedRow();
                 if (row >= 0) {
                     txtName.setText(model.getValueAt(row, 1).toString());
-                    txtDesc.setText(model.getValueAt(row, 2).toString());
-                    txtPrice.setText(model.getValueAt(row, 3).toString());
-                    txtQty.setText(model.getValueAt(row, 4).toString());
-                    String categoryName = model.getValueAt(row, 5).toString();
+                    txtDesc.setText("");
+                    String costStr = model.getValueAt(row, 3).toString().replace("₱", "").trim();
+                    String priceStr = model.getValueAt(row, 4).toString().replace("₱", "").trim();
+                    txtCostPrice.setText(costStr);
+                    txtPrice.setText(priceStr);
+                    txtQty.setText(model.getValueAt(row, 6).toString());
+                    String categoryName = model.getValueAt(row, 2).toString();
                     for (int i = 0; i < cmbCategory.getItemCount(); i++) {
                         if (cmbCategory.getItemAt(i).getName().equals(categoryName)) {
                             cmbCategory.setSelectedIndex(i);
                             break;
                         }
                     }
+                    calculateProfit();
                 }
             }
         });
+    }
+
+    private void calculateProfit() {
+        try {
+            double costPrice = Double.parseDouble(txtCostPrice.getText().isEmpty() ? "0" : txtCostPrice.getText());
+            double sellingPrice = Double.parseDouble(txtPrice.getText().isEmpty() ? "0" : txtPrice.getText());
+            double profit = sellingPrice - costPrice;
+            lblProfit.setText(String.format("₱%.2f", profit));
+        } catch (NumberFormatException ex) {
+            lblProfit.setText("₱0.00");
+        }
     }
 
     private void loadCategories() {
@@ -124,13 +155,15 @@ public class ProductManagementPanel extends JPanel {
         model.setRowCount(0);
         List<Product> products = productDAO.getAllProducts();
         for (Product p : products) {
+            double profit = p.getPrice() - p.getCostPrice();
             model.addRow(new Object[]{
                 p.getId(),
                 p.getName(),
-                p.getDescription(),
-                String.format("%.2f", p.getPrice()),
-                p.getQuantity(),
-                p.getCategoryName() != null ? p.getCategoryName() : "N/A"
+                p.getCategoryName() != null ? p.getCategoryName() : "N/A",
+                String.format("₱%.2f", p.getCostPrice()),
+                String.format("₱%.2f", p.getPrice()),
+                String.format("₱%.2f", profit),
+                p.getQuantity()
             });
         }
     }
@@ -143,11 +176,15 @@ public class ProductManagementPanel extends JPanel {
                 return;
             }
 
+            double costPrice = Double.parseDouble(txtCostPrice.getText().isEmpty() ? "0" : txtCostPrice.getText());
+            double sellingPrice = Double.parseDouble(txtPrice.getText());
+
             Product product = new Product(
                 0,
                 txtName.getText(),
                 txtDesc.getText(),
-                Double.parseDouble(txtPrice.getText()),
+                costPrice,
+                sellingPrice,
                 Integer.parseInt(txtQty.getText()),
                 selectedCategory.getCategoryID()
             );
@@ -171,11 +208,15 @@ public class ProductManagementPanel extends JPanel {
             Category selectedCategory = (Category) cmbCategory.getSelectedItem();
             int id = (int) model.getValueAt(row, 0);
             
+            double costPrice = Double.parseDouble(txtCostPrice.getText().isEmpty() ? "0" : txtCostPrice.getText());
+            double sellingPrice = Double.parseDouble(txtPrice.getText());
+
             Product product = new Product(
                 id,
                 txtName.getText(),
                 txtDesc.getText(),
-                Double.parseDouble(txtPrice.getText()),
+                costPrice,
+                sellingPrice,
                 Integer.parseInt(txtQty.getText()),
                 selectedCategory.getCategoryID()
             );
@@ -227,8 +268,10 @@ public class ProductManagementPanel extends JPanel {
     private void clearForm() {
         txtName.setText("");
         txtDesc.setText("");
+        txtCostPrice.setText("");
         txtPrice.setText("");
         txtQty.setText("");
+        lblProfit.setText("₱0.00");
         if (cmbCategory.getItemCount() > 0) {
             cmbCategory.setSelectedIndex(0);
         }

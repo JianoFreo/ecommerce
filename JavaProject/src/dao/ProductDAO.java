@@ -25,6 +25,7 @@ public class ProductDAO { // DAO class for database operations
                     rs.getInt("id"),
                     rs.getString("name"),
                     rs.getString("description"),
+                    rs.getDouble("costPrice"),
                     rs.getDouble("price"),
                     rs.getInt("quantity"),
                     rs.getInt("categoryID")
@@ -52,6 +53,7 @@ public class ProductDAO { // DAO class for database operations
                     rs.getInt("id"),
                     rs.getString("name"),
                     rs.getString("description"),
+                    rs.getDouble("costPrice"),
                     rs.getDouble("price"),
                     rs.getInt("quantity"),
                     rs.getInt("categoryID")
@@ -78,6 +80,7 @@ public class ProductDAO { // DAO class for database operations
                     rs.getInt("id"),
                     rs.getString("name"),
                     rs.getString("description"),
+                    rs.getDouble("costPrice"),
                     rs.getDouble("price"),
                     rs.getInt("quantity"),
                     rs.getInt("categoryID")
@@ -95,12 +98,13 @@ public class ProductDAO { // DAO class for database operations
     public void addProduct(Product product) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO products (name, description, price, quantity, categoryID) VALUES (?, ?, ?, ?, ?)");
+                "INSERT INTO products (name, description, costPrice, price, quantity, categoryID) VALUES (?, ?, ?, ?, ?, ?)");
             ps.setString(1, product.getName());
             ps.setString(2, product.getDescription());
-            ps.setDouble(3, product.getPrice());
-            ps.setInt(4, product.getQuantity());
-            ps.setInt(5, product.getCategoryID());
+            ps.setDouble(3, product.getCostPrice());
+            ps.setDouble(4, product.getPrice());
+            ps.setInt(5, product.getQuantity());
+            ps.setInt(6, product.getCategoryID());
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,13 +115,14 @@ public class ProductDAO { // DAO class for database operations
     public void updateProduct(Product product) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(
-                "UPDATE products SET name=?, description=?, price=?, quantity=?, categoryID=? WHERE id=?");
+                "UPDATE products SET name=?, description=?, costPrice=?, price=?, quantity=?, categoryID=? WHERE id=?");
             ps.setString(1, product.getName());
             ps.setString(2, product.getDescription());
-            ps.setDouble(3, product.getPrice());
-            ps.setInt(4, product.getQuantity());
-            ps.setInt(5, product.getCategoryID());
-            ps.setInt(6, product.getId());
+            ps.setDouble(3, product.getCostPrice());
+            ps.setDouble(4, product.getPrice());
+            ps.setInt(5, product.getQuantity());
+            ps.setInt(6, product.getCategoryID());
+            ps.setInt(7, product.getId());
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();

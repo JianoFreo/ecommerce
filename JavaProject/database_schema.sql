@@ -48,6 +48,7 @@ CREATE TABLE products (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(200) NOT NULL,
     description TEXT,
+    costPrice DECIMAL(10, 2) DEFAULT 0 CHECK (costPrice >= 0),
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
     quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     categoryID INT,

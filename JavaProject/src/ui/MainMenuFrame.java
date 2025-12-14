@@ -32,7 +32,7 @@ public class MainMenuFrame extends JFrame {
         if ("Admin".equals(currentUser.getRole())) {
             add(new AdminPanel(currentUser), BorderLayout.CENTER);
         } else {
-            add(new ShoppingPanel(currentUser), BorderLayout.CENTER);
+            add(new CustomerPanel(currentUser), BorderLayout.CENTER);
         }
 
         // Footer with logout
