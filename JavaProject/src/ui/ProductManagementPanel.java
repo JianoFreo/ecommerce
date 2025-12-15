@@ -265,42 +265,45 @@ public class ProductManagementPanel extends JPanel {
         card.add(imgPanel, BorderLayout.NORTH);
 
         // Info
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        JPanel infoPanel = new JPanel(new GridBagLayout());
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         infoPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(2, 0, 2, 0);
 
         JLabel nameLabel = new JLabel(p.getName());
         nameLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        infoPanel.add(nameLabel, gbc);
 
+        gbc.gridy++;
         JLabel priceLabel = new JLabel("₱" + String.format("%.0f", p.getPrice()));
         priceLabel.setFont(new Font("Arial", Font.BOLD, 16));
         priceLabel.setForeground(new Color(200, 0, 0));
-        priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        infoPanel.add(priceLabel, gbc);
 
+        gbc.gridy++;
         double profit = p.getPrice() - p.getCostPrice();
         JLabel profitLabel = new JLabel("Profit: ₱" + String.format("%.0f", profit));
         profitLabel.setFont(new Font("Arial", Font.PLAIN, 10));
         profitLabel.setForeground(new Color(0, 150, 0));
-        profitLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        infoPanel.add(profitLabel, gbc);
 
+        gbc.gridy++;
         JLabel stockLabel = new JLabel("Stock: " + p.getQuantity());
         stockLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        stockLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        infoPanel.add(nameLabel);
-        infoPanel.add(Box.createVerticalStrut(3));
-        infoPanel.add(priceLabel);
-        infoPanel.add(Box.createVerticalStrut(2));
-        infoPanel.add(profitLabel);
-        infoPanel.add(Box.createVerticalStrut(2));
-        infoPanel.add(stockLabel);
-        infoPanel.add(Box.createVerticalStrut(5));
+        infoPanel.add(stockLabel, gbc);
 
         // Buttons
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        btnPanel.setMaximumSize(new Dimension(200, 30));
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1.0;
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 2));
         btnPanel.setBackground(Color.WHITE);
         JButton btnEdit = new JButton("✏️ Edit");
         JButton btnDelete = new JButton("🗑️ Delete");
@@ -311,7 +314,7 @@ public class ProductManagementPanel extends JPanel {
         btnPanel.add(btnEdit);
         btnPanel.add(btnDelete);
 
-        infoPanel.add(btnPanel);
+        infoPanel.add(btnPanel, gbc);
         card.add(infoPanel, BorderLayout.CENTER);
 
         card.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -481,9 +484,12 @@ public class ProductManagementPanel extends JPanel {
 
     private void deleteProduct(Product p) {
         if (JOptionPane.showConfirmDialog(this, "Delete '" + p.getName() + "'?") == 0) {
-            productDAO.deleteProduct(p.getId());
-            JOptionPane.showMessageDialog(this, "✓ Product deleted!");
-            loadGrid();
+            if (productDAO.deleteProduct(p.getId())) {
+                JOptionPane.showMessageDialog(this, "✓ Product deleted!");
+                loadGrid();
+            } else {
+                JOptionPane.showMessageDialog(this, "✗ Failed to delete product");
+            }
         }
     }
 

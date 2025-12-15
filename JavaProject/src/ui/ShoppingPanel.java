@@ -205,36 +205,46 @@ public class ShoppingPanel extends JPanel {
         card.add(imgPanel, BorderLayout.NORTH);
 
         // Info
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        JPanel infoPanel = new JPanel(new GridBagLayout());
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         infoPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(2, 0, 2, 0);
 
-        JLabel nameLabel = new JLabel(p.getName());
+        JTextArea nameLabel = new JTextArea(p.getName(), 2, 18);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        nameLabel.setLineWrap(true);
+        nameLabel.setWrapStyleWord(true);
+        nameLabel.setEditable(false);
+        nameLabel.setOpaque(false);
+        nameLabel.setBorder(null);
+        infoPanel.add(nameLabel, gbc);
 
+        gbc.gridy++;
         JLabel priceLabel = new JLabel("₱" + String.format("%.0f", p.getPrice()));
         priceLabel.setFont(new Font("Arial", Font.BOLD, 18));
         priceLabel.setForeground(new Color(200, 0, 0));
-        priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        infoPanel.add(priceLabel, gbc);
 
         String stock = p.getQuantity() > 0 ? "✓ Stock: " + p.getQuantity() : "✗ Out of Stock";
         Color stockCol = p.getQuantity() > 0 ? new Color(0, 150, 0) : Color.RED;
+        gbc.gridy++;
         JLabel stockLabel = new JLabel(stock);
         stockLabel.setFont(new Font("Arial", Font.BOLD, 11));
         stockLabel.setForeground(stockCol);
-        stockLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        infoPanel.add(nameLabel);
-        infoPanel.add(Box.createVerticalStrut(3));
-        infoPanel.add(priceLabel);
-        infoPanel.add(Box.createVerticalStrut(3));
-        infoPanel.add(stockLabel);
+        infoPanel.add(stockLabel, gbc);
 
         // Buttons Panel
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        btnPanel.setMaximumSize(new Dimension(200, 40));
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1.0;
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 2));
         btnPanel.setBackground(Color.WHITE);
         
         JButton btnDetails = new JButton("ℹ️ Details");
@@ -248,8 +258,7 @@ public class ShoppingPanel extends JPanel {
         btnCart.addActionListener(e -> addToCart(p));
         btnPanel.add(btnCart);
         
-        infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(btnPanel);
+        infoPanel.add(btnPanel, gbc);
 
         card.add(infoPanel, BorderLayout.CENTER);
 

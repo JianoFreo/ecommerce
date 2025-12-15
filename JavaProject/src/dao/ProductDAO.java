@@ -133,14 +133,43 @@ public class ProductDAO { // DAO class for database operations
         }
     }
 
-    // Delete product by id
-    public void deleteProduct(int id) {
+    // Delete product by id (with cascade delete of related records)
+    public boolean deleteProduct(int id) {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id=?"); // SQL delete
-            ps.setInt(1, id); // Set id
-            ps.executeUpdate(); // Execute delete
+            conn.setAutoCommit(false);
+            try {
+                // Delete from reviews first
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM reviews WHERE productID=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                // Delete from order_items
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM order_items WHERE productID=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                // Delete from cart_items
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM cart_items WHERE productID=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                // Finally delete product
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+                return false;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (Exception e) {
-            e.printStackTrace(); // Print error
+            e.printStackTrace();
+            return false;
         }
     }
 }
