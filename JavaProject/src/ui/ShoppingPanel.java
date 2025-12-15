@@ -1,252 +1,288 @@
 package src.ui;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import src.dao.ProductDAO;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import src.dao.OrderDAO;
-import src.model.Product;
+import src.dao.ProductDAO;
 import src.model.Order;
 import src.model.OrderItem;
+import src.model.Product;
 import src.model.User;
 
 public class ShoppingPanel extends JPanel {
-    private JTable productTable;
-    private DefaultTableModel productTableModel;
+    private JPanel gridPanel;
     private JTable cartTable;
-    private DefaultTableModel cartTableModel;
+    private DefaultTableModel cartModel;
     private ProductDAO productDAO;
     private OrderDAO orderDAO;
     private User currentUser;
-    private List<OrderItem> cartItems;
+    private List<OrderItem> cart;
     private JLabel totalLabel;
 
     public ShoppingPanel(User user) {
         this.currentUser = user;
         this.productDAO = new ProductDAO();
         this.orderDAO = new OrderDAO();
-        this.cartItems = new ArrayList<>();
-        
-        setLayout(new BorderLayout());
+        this.cart = new ArrayList<>();
 
-        // Split pane for products and cart
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        setLayout(new BorderLayout(10, 10));
+        setBackground(new Color(245, 245, 245));
+
+        // Split: Grid left, Cart right
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+
+        // Left: Product Grid
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setBackground(new Color(245, 245, 245));
         
-        // Products Panel (Top)
-        JPanel productsPanel = new JPanel(new BorderLayout());
-        productsPanel.setBorder(BorderFactory.createTitledBorder("Available Products"));
-        
-        String[] productColumns = {"ID", "Name", "Price", "Stock", "Category"};
-        productTableModel = new DefaultTableModel(productColumns, 0) {
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(245, 245, 245));
+        JLabel title = new JLabel("🛍️ Products");
+        title.setFont(new Font("Arial", Font.BOLD, 16));
+        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JButton refresh = new JButton("Refresh");
+        refresh.addActionListener(e -> loadGrid());
+        JPanel refreshPanel = new JPanel();
+        refreshPanel.add(refresh);
+        headerPanel.add(title, BorderLayout.WEST);
+        headerPanel.add(refreshPanel, BorderLayout.EAST);
+        leftPanel.add(headerPanel, BorderLayout.NORTH);
+
+        gridPanel = new JPanel(new GridLayout(0, 3, 15, 15));
+        gridPanel.setBackground(new Color(245, 245, 245));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JScrollPane gridScroll = new JScrollPane(gridPanel);
+        gridScroll.setBackground(new Color(245, 245, 245));
+        gridScroll.getViewport().setBackground(new Color(245, 245, 245));
+        leftPanel.add(gridScroll, BorderLayout.CENTER);
+
+        // Right: Shopping Cart
+        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        rightPanel.setBackground(Color.WHITE);
+
+        JLabel cartTitle = new JLabel("🛒 Your Cart");
+        cartTitle.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(cartTitle, BorderLayout.NORTH);
+
+        String[] cols = {"Product", "Price", "Qty", "Subtotal"};
+        cartModel = new DefaultTableModel(cols, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int r, int c) { return false; }
         };
-        productTable = new JTable(productTableModel);
-        productsPanel.add(new JScrollPane(productTable), BorderLayout.CENTER);
-        
-        JPanel productButtonPanel = new JPanel();
-        JButton btnAddToCart = new JButton("Add to Cart");
-        JButton btnRefresh = new JButton("Refresh Products");
-        btnAddToCart.addActionListener(e -> addToCart());
-        btnRefresh.addActionListener(e -> loadProducts());
-        productButtonPanel.add(btnAddToCart);
-        productButtonPanel.add(btnRefresh);
-        productsPanel.add(productButtonPanel, BorderLayout.SOUTH);
-        
-        // Cart Panel (Bottom)
-        JPanel cartPanel = new JPanel(new BorderLayout());
-        cartPanel.setBorder(BorderFactory.createTitledBorder("Shopping Cart"));
-        
-        String[] cartColumns = {"Product", "Price", "Quantity", "Subtotal"};
-        cartTableModel = new DefaultTableModel(cartColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        cartTable = new JTable(cartTableModel);
-        cartPanel.add(new JScrollPane(cartTable), BorderLayout.CENTER);
-        
-        JPanel cartButtonPanel = new JPanel(new BorderLayout());
-        JPanel leftButtons = new JPanel();
-        JButton btnRemove = new JButton("Remove Item");
-        JButton btnClear = new JButton("Clear Cart");
-        btnRemove.addActionListener(e -> removeFromCart());
+        cartTable = new JTable(cartModel);
+        cartTable.setRowHeight(25);
+        rightPanel.add(new JScrollPane(cartTable), BorderLayout.CENTER);
+
+        JPanel cartBottomPanel = new JPanel(new BorderLayout());
+        JPanel cartButtonsLeft = new JPanel();
+        JButton btnRemove = new JButton("Remove");
+        JButton btnClear = new JButton("Clear");
+        btnRemove.addActionListener(e -> removeCart());
         btnClear.addActionListener(e -> clearCart());
-        leftButtons.add(btnRemove);
-        leftButtons.add(btnClear);
-        
-        JPanel rightPanel = new JPanel();
-        totalLabel = new JLabel("Total: $0.00");
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        JButton btnCheckout = new JButton("Place Order");
-        btnCheckout.addActionListener(e -> checkout());
-        rightPanel.add(totalLabel);
-        rightPanel.add(btnCheckout);
-        
-        cartButtonPanel.add(leftButtons, BorderLayout.WEST);
-        cartButtonPanel.add(rightPanel, BorderLayout.EAST);
-        cartPanel.add(cartButtonPanel, BorderLayout.SOUTH);
-        
-        splitPane.setTopComponent(productsPanel);
-        splitPane.setBottomComponent(cartPanel);
-        splitPane.setDividerLocation(300);
-        
-        add(splitPane, BorderLayout.CENTER);
-        
-        loadProducts();
+        cartButtonsLeft.add(btnRemove);
+        cartButtonsLeft.add(btnClear);
+
+        JPanel cartButtonsRight = new JPanel(new BorderLayout(10, 0));
+        totalLabel = new JLabel("Total: ₱0");
+        totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        totalLabel.setForeground(new Color(200, 0, 0));
+        JButton btnOrder = new JButton("Place Order");
+        btnOrder.setFont(new Font("Arial", Font.BOLD, 12));
+        btnOrder.setBackground(new Color(255, 153, 0));
+        btnOrder.setForeground(Color.WHITE);
+        btnOrder.addActionListener(e -> checkout());
+        cartButtonsRight.add(totalLabel, BorderLayout.WEST);
+        cartButtonsRight.add(btnOrder, BorderLayout.EAST);
+
+        cartBottomPanel.add(cartButtonsLeft, BorderLayout.WEST);
+        cartBottomPanel.add(cartButtonsRight, BorderLayout.EAST);
+        rightPanel.add(cartBottomPanel, BorderLayout.SOUTH);
+
+        split.setLeftComponent(leftPanel);
+        split.setRightComponent(rightPanel);
+        split.setDividerLocation(700);
+        split.setResizeWeight(0.65);
+
+        add(split, BorderLayout.CENTER);
+        loadGrid();
     }
 
-    private void loadProducts() {
-        productTableModel.setRowCount(0);
+    private void loadGrid() {
+        gridPanel.removeAll();
         List<Product> products = productDAO.getAllProducts();
-        
-        for (Product product : products) {
-            if (product.getQuantity() > 0) { // Only show in-stock products
-                productTableModel.addRow(new Object[]{
-                    product.getId(),
-                    product.getName(),
-                    String.format("$%.2f", product.getPrice()),
-                    product.getQuantity(),
-                    product.getCategoryName()
-                });
-            }
+        for (Product p : products) {
+            gridPanel.add(createCard(p));
         }
+        gridPanel.revalidate();
+        gridPanel.repaint();
     }
 
-    private void addToCart() {
-        int selectedRow = productTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a product to add to cart.");
-            return;
-        }
+    private JPanel createCard(Product p) {
+        JPanel card = new JPanel(new BorderLayout(5, 5));
+        card.setPreferredSize(new Dimension(220, 350));
+        card.setMaximumSize(new Dimension(220, 350));
+        card.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        card.setBackground(Color.WHITE);
 
-        int productId = (int) productTableModel.getValueAt(selectedRow, 0);
-        String productName = (String) productTableModel.getValueAt(selectedRow, 1);
-        String priceStr = (String) productTableModel.getValueAt(selectedRow, 2);
-        double price = Double.parseDouble(priceStr.replace("$", ""));
-        int availableStock = (int) productTableModel.getValueAt(selectedRow, 3);
-        
-        String qtyStr = JOptionPane.showInputDialog(this, "Enter quantity:", "1");
-        if (qtyStr == null || qtyStr.trim().isEmpty()) {
-            return;
+        // Image
+        JPanel imgPanel = new JPanel(new BorderLayout());
+        imgPanel.setBackground(new Color(240, 240, 240));
+        imgPanel.setPreferredSize(new Dimension(220, 220));
+        JLabel imgLabel = new JLabel();
+        imgLabel.setHorizontalAlignment(JLabel.CENTER);
+        imgLabel.setVerticalAlignment(JLabel.CENTER);
+
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && new File(p.getImageUrl()).exists()) {
+            try {
+                ImageIcon icon = new ImageIcon(p.getImageUrl());
+                Image img = icon.getImage().getScaledInstance(210, 210, Image.SCALE_SMOOTH);
+                imgLabel.setIcon(new ImageIcon(img));
+            } catch (Exception e) {
+                imgLabel.setText("📷");
+                imgLabel.setFont(new Font("Arial", Font.BOLD, 40));
+            }
+        } else {
+            imgLabel.setText("📷");
+            imgLabel.setFont(new Font("Arial", Font.BOLD, 40));
         }
-        
+        imgPanel.add(imgLabel, BorderLayout.CENTER);
+        card.add(imgPanel, BorderLayout.NORTH);
+
+        // Info
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        infoPanel.setBackground(Color.WHITE);
+
+        JLabel nameLabel = new JLabel(p.getName());
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel priceLabel = new JLabel("₱" + String.format("%.0f", p.getPrice()));
+        priceLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        priceLabel.setForeground(new Color(200, 0, 0));
+        priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String stock = p.getQuantity() > 0 ? "✓ In Stock" : "✗ Out";
+        Color stockCol = p.getQuantity() > 0 ? new Color(0, 150, 0) : Color.RED;
+        JLabel stockLabel = new JLabel(stock);
+        stockLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        stockLabel.setForeground(stockCol);
+        stockLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createVerticalStrut(3));
+        infoPanel.add(priceLabel);
+        infoPanel.add(Box.createVerticalStrut(3));
+        infoPanel.add(stockLabel);
+
+        // Button
+        JButton btnCart = new JButton("Add to Cart");
+        btnCart.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnCart.setMaximumSize(new Dimension(200, 30));
+        btnCart.setEnabled(p.getQuantity() > 0);
+        btnCart.addActionListener(e -> addToCart(p));
+        infoPanel.add(Box.createVerticalStrut(5));
+        infoPanel.add(btnCart);
+
+        card.add(infoPanel, BorderLayout.CENTER);
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                card.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 2));
+            }
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                card.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+            }
+        });
+
+        return card;
+    }
+
+    private void addToCart(Product p) {
+        String qty = JOptionPane.showInputDialog(this, "Qty:", "1");
+        if (qty == null || qty.isEmpty()) return;
         try {
-            int quantity = Integer.parseInt(qtyStr);
-            if (quantity <= 0) {
-                JOptionPane.showMessageDialog(this, "Quantity must be greater than 0.");
+            int q = Integer.parseInt(qty);
+            if (q <= 0 || q > p.getQuantity()) {
+                JOptionPane.showMessageDialog(this, "Invalid quantity!");
                 return;
             }
-            if (quantity > availableStock) {
-                JOptionPane.showMessageDialog(this, "Only " + availableStock + " items available in stock.");
-                return;
-            }
-            
-            // Check if product already in cart
             boolean found = false;
-            for (OrderItem item : cartItems) {
-                if (item.getProductID() == productId) {
-                    int newQty = item.getQuantity() + quantity;
-                    if (newQty > availableStock) {
-                        JOptionPane.showMessageDialog(this, "Cannot add more. Stock limit reached.");
+            for (OrderItem item : cart) {
+                if (item.getProductID() == p.getId()) {
+                    int newQty = item.getQuantity() + q;
+                    if (newQty > p.getQuantity()) {
+                        JOptionPane.showMessageDialog(this, "Max: " + p.getQuantity());
                         return;
                     }
                     item.setQuantity(newQty);
-                    item.setSubtotal(price * newQty);
+                    item.setSubtotal(p.getPrice() * newQty);
                     found = true;
                     break;
                 }
             }
-            
             if (!found) {
-                OrderItem item = new OrderItem(0, 0, productId, productName, price, quantity);
-                cartItems.add(item);
+                cart.add(new OrderItem(0, 0, p.getId(), p.getName(), p.getPrice(), q));
             }
-            
-            updateCartDisplay();
-            JOptionPane.showMessageDialog(this, "Added to cart!");
-            
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid quantity.");
+            updateCart();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid number!");
         }
     }
 
-    private void removeFromCart() {
-        int selectedRow = cartTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an item to remove.");
-            return;
+    private void removeCart() {
+        int row = cartTable.getSelectedRow();
+        if (row >= 0) {
+            cart.remove(row);
+            updateCart();
         }
-        
-        cartItems.remove(selectedRow);
-        updateCartDisplay();
     }
 
     private void clearCart() {
-        if (cartItems.isEmpty()) {
-            return;
-        }
-        
-        int confirm = JOptionPane.showConfirmDialog(this, 
-            "Clear all items from cart?", "Confirm", JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            cartItems.clear();
-            updateCartDisplay();
+        if (!cart.isEmpty() && JOptionPane.showConfirmDialog(this, "Clear?") == 0) {
+            cart.clear();
+            updateCart();
         }
     }
 
-    private void updateCartDisplay() {
-        cartTableModel.setRowCount(0);
+    private void updateCart() {
+        cartModel.setRowCount(0);
         double total = 0;
-        
-        for (OrderItem item : cartItems) {
-            cartTableModel.addRow(new Object[]{
+        for (OrderItem item : cart) {
+            cartModel.addRow(new Object[]{
                 item.getProductName(),
-                String.format("$%.2f", item.getPrice()),
+                "₱" + String.format("%.0f", item.getPrice()),
                 item.getQuantity(),
-                String.format("$%.2f", item.getSubtotal())
+                "₱" + String.format("%.0f", item.getSubtotal())
             });
             total += item.getSubtotal();
         }
-        
-        totalLabel.setText(String.format("Total: $%.2f", total));
+        totalLabel.setText(String.format("Total: ₱%.0f", total));
     }
 
     private void checkout() {
-        if (cartItems.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Your cart is empty.");
+        if (cart.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Cart empty!");
             return;
         }
-        
-        String address = JOptionPane.showInputDialog(this, 
-            "Enter shipping address:", currentUser.getAddress());
-        
-        if (address == null || address.trim().isEmpty()) {
-            return;
-        }
-        
-        double total = cartItems.stream().mapToDouble(OrderItem::getSubtotal).sum();
-        
-        Order order = new Order(0, currentUser.getUserID(), null, "Pending", total, address);
-        order.setItems(new ArrayList<>(cartItems));
-        
-        boolean success = orderDAO.createOrder(order);
-        
-        if (success) {
-            JOptionPane.showMessageDialog(this, 
-                "Order placed successfully!\nTotal: $" + String.format("%.2f", total));
-            cartItems.clear();
-            updateCartDisplay();
-            loadProducts(); // Refresh to show updated stock
+        String addr = JOptionPane.showInputDialog(this, "Address:", currentUser.getAddress());
+        if (addr == null || addr.isEmpty()) return;
+        double total = cart.stream().mapToDouble(OrderItem::getSubtotal).sum();
+        Order order = new Order(0, currentUser.getUserID(), null, "Pending", total, addr);
+        order.setItems(new ArrayList<>(cart));
+        if (orderDAO.createOrder(order)) {
+            JOptionPane.showMessageDialog(this, "Order placed! Total: ₱" + String.format("%.0f", total));
+            cart.clear();
+            updateCart();
+            loadGrid();
         } else {
-            JOptionPane.showMessageDialog(this, 
-                "Failed to place order. Please try again.");
+            JOptionPane.showMessageDialog(this, "Order failed!");
         }
     }
 }
