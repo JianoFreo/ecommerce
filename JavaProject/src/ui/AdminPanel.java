@@ -15,6 +15,7 @@ public class AdminPanel extends JPanel {
         // Tabbed Pane for all management panels
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.addTab("Products", new ProductManagementPanel());
+        tabbedPane.addTab("Coupons", new AdminCouponPanel());
         tabbedPane.addTab("Categories", new CategoryManagementPanel());
         tabbedPane.addTab("Users", new UserManagementPanel());
         tabbedPane.addTab("Orders", new OrderManagementPanel());

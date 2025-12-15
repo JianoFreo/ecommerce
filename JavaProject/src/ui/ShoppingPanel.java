@@ -6,9 +6,11 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import src.dao.CategoryDAO;
+import src.dao.DiscountCodeDAO;
 import src.dao.OrderDAO;
 import src.dao.ProductDAO;
 import src.model.Category;
+import src.model.DiscountCode;
 import src.model.Order;
 import src.model.OrderItem;
 import src.model.Product;
@@ -20,6 +22,7 @@ public class ShoppingPanel extends JPanel {
     private DefaultTableModel cartModel;
     private ProductDAO productDAO;
     private CategoryDAO categoryDAO;
+    private DiscountCodeDAO discountDAO;
     private OrderDAO orderDAO;
     private User currentUser;
     private List<OrderItem> cart;
@@ -27,11 +30,13 @@ public class ShoppingPanel extends JPanel {
     private JLabel totalLabel;
     private JTextField txtSearch;
     private JComboBox<String> cmbCategory;
+    private double discountAmount = 0;
 
     public ShoppingPanel(User user) {
         this.currentUser = user;
         this.productDAO = new ProductDAO();
         this.categoryDAO = new CategoryDAO();
+        this.discountDAO = new DiscountCodeDAO();
         this.orderDAO = new OrderDAO();
         this.cart = new ArrayList<>();
         this.productCache = new ArrayList<>();
@@ -84,6 +89,42 @@ public class ShoppingPanel extends JPanel {
         JPanel bottomRightPanel = new JPanel(new BorderLayout(10, 10));
         bottomRightPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         bottomRightPanel.setBackground(Color.WHITE);
+
+        // Discount Code Panel
+        JPanel discountPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        discountPanel.setBackground(Color.WHITE);
+        discountPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        JLabel discountLabel = new JLabel("Coupon Code:");
+        JTextField txtCoupon = new JTextField(12);
+        JButton btnApply = new JButton("Apply");
+        JLabel statusLabel = new JLabel("");
+        discountPanel.add(discountLabel);
+        discountPanel.add(txtCoupon);
+        discountPanel.add(btnApply);
+        discountPanel.add(statusLabel);
+        bottomRightPanel.add(discountPanel, BorderLayout.NORTH);
+
+        btnApply.addActionListener(e -> {
+            String code = txtCoupon.getText().trim();
+            if (code.isEmpty()) {
+                statusLabel.setText("Enter a coupon code");
+                statusLabel.setForeground(Color.RED);
+                return;
+            }
+            DiscountCode discount = discountDAO.getDiscountCode(code);
+            if (discount != null) {
+                double total = calculateTotal();
+                discountAmount = discount.calculateDiscount(total);
+                statusLabel.setText("✓ Coupon applied!");
+                statusLabel.setForeground(new Color(0, 150, 0));
+                updateTotal();
+            } else {
+                discountAmount = 0;
+                statusLabel.setText("❌ Invalid or expired coupon");
+                statusLabel.setForeground(Color.RED);
+                updateTotal();
+            }
+        });
 
         // Checkout buttons panel
         JPanel cartBottomPanel = new JPanel(new BorderLayout());
@@ -385,7 +426,25 @@ public class ShoppingPanel extends JPanel {
             });
             total += item.getSubtotal();
         }
-        totalLabel.setText("Total: ₱" + String.format("%.0f", total));
+        updateTotal();
+    }
+
+    private double calculateTotal() {
+        double total = 0;
+        for (OrderItem item : cart) {
+            total += item.getSubtotal();
+        }
+        return total;
+    }
+
+    private void updateTotal() {
+        double total = calculateTotal();
+        double finalTotal = total - discountAmount;
+        if (discountAmount > 0) {
+            totalLabel.setText("Total: ₱" + String.format("%.0f", finalTotal) + " (Saved ₱" + String.format("%.0f", discountAmount) + ")");
+        } else {
+            totalLabel.setText("Total: ₱" + String.format("%.0f", finalTotal));
+        }
     }
 
     private class CartImageRenderer extends javax.swing.table.DefaultTableCellRenderer {
@@ -545,11 +604,6 @@ public class ShoppingPanel extends JPanel {
         }
         gridPanel.revalidate();
         gridPanel.repaint();
-    }
-
-    private void updateTotal() {
-        double cartTotal = cart.stream().mapToDouble(OrderItem::getSubtotal).sum();
-        totalLabel.setText("Total: ₱" + String.format("%.0f", cartTotal));
     }
 }
 
