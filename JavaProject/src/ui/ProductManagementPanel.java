@@ -11,6 +11,7 @@ import src.dao.CategoryDAO;
 import src.dao.ProductDAO;
 import src.model.Category;
 import src.model.Product;
+import src.util.ImageHelper;
 
 public class ProductManagementPanel extends JPanel {
     private JPanel gridPanel;
@@ -183,9 +184,10 @@ public class ProductManagementPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
 
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && new File(p.getImageUrl()).exists()) {
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
             try {
-                ImageIcon icon = new ImageIcon(p.getImageUrl());
+                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
+                ImageIcon icon = new ImageIcon(absolutePath);
                 Image img = icon.getImage().getScaledInstance(210, 170, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {

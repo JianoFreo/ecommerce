@@ -1,7 +1,6 @@
 package src.ui;
 
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
@@ -12,6 +11,7 @@ import src.model.Order;
 import src.model.OrderItem;
 import src.model.Product;
 import src.model.User;
+import src.util.ImageHelper;
 
 public class ShoppingPanel extends JPanel {
     private JPanel gridPanel;
@@ -142,9 +142,10 @@ public class ShoppingPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
 
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && new File(p.getImageUrl()).exists()) {
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
             try {
-                ImageIcon icon = new ImageIcon(p.getImageUrl());
+                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
+                ImageIcon icon = new ImageIcon(absolutePath);
                 Image img = icon.getImage().getScaledInstance(210, 210, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
@@ -238,9 +239,10 @@ public class ShoppingPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
         
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && new File(p.getImageUrl()).exists()) {
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
             try {
-                ImageIcon icon = new ImageIcon(p.getImageUrl());
+                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
+                ImageIcon icon = new ImageIcon(absolutePath);
                 Image img = icon.getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
@@ -396,9 +398,10 @@ public class ShoppingPanel extends JPanel {
                 imgLabel.setHorizontalAlignment(JLabel.CENTER);
                 imgLabel.setVerticalAlignment(JLabel.CENTER);
                 
-                if (!imageUrl.isEmpty() && new File(imageUrl).exists()) {
+                if (!imageUrl.isEmpty() && ImageHelper.imageExists(imageUrl)) {
                     try {
-                        ImageIcon icon = new ImageIcon(imageUrl);
+                        String absolutePath = ImageHelper.getAbsolutePath(imageUrl);
+                        ImageIcon icon = new ImageIcon(absolutePath);
                         Image img = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
                         imgLabel.setIcon(new ImageIcon(img));
                     } catch (Exception e) {
