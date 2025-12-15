@@ -10,6 +10,8 @@ public class Product { // Product class represents a product entity
     private int categoryID; // Foreign key to category
     private String categoryName; // Category name (for display)
     private byte[] imageData; // Image binary data
+    private double averageRating; // Average rating 0-5
+    private int totalReviews; // Total number of reviews
 
     public Product() {} // Default constructor (empty product)
 
@@ -85,6 +87,12 @@ public class Product { // Product class represents a product entity
     
     public byte[] getImageData() { return imageData; }
     public void setImageData(byte[] imageData) { this.imageData = imageData; }
+
+    public double getAverageRating() { return averageRating; }
+    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+
+    public int getTotalReviews() { return totalReviews; }
+    public void setTotalReviews(int totalReviews) { this.totalReviews = totalReviews; }
 
     @Override
     public String toString() {

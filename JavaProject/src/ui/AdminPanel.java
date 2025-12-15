@@ -1,8 +1,8 @@
 package src.ui;
 
-import src.model.User;
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
+import src.model.User;
 
 public class AdminPanel extends JPanel {
     private User currentUser;

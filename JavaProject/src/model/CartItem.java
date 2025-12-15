@@ -8,9 +8,19 @@ public class CartItem {
     private double productPrice;
     private int quantity;
     private double subtotal;
+    private String imageUrl; // For cart display
 
     // Default constructor
     public CartItem() {}
+
+    // Constructor with basic fields
+    public CartItem(int productID, String productName, double productPrice, int quantity) {
+        this.productID = productID;
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.quantity = quantity;
+        this.subtotal = productPrice * quantity;
+    }
 
     // Constructor with all fields
     public CartItem(int cartItemID, int cartID, int productID, String productName, 
@@ -82,4 +92,15 @@ public class CartItem {
     public void calculateSubtotal() {
         this.subtotal = productPrice * quantity;
     }
-}
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public double getPrice() {
+        return productPrice;
+    }}

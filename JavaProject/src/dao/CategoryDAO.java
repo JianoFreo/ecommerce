@@ -88,4 +88,47 @@ public class CategoryDAO {
             return false;
         }
     }
+
+    // Get main categories (no parent)
+    public List<Category> getMainCategories() {
+        List<Category> categories = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT * FROM categories WHERE parentCategoryID IS NULL ORDER BY name";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            
+            while (rs.next()) {
+                categories.add(new Category(
+                    rs.getInt("categoryID"),
+                    rs.getString("name"),
+                    rs.getString("description")
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return categories;
+    }
+    
+    // Get subcategories of a parent
+    public List<Category> getSubcategories(int parentCategoryID) {
+        List<Category> categories = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT * FROM categories WHERE parentCategoryID = ? ORDER BY name";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, parentCategoryID);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                categories.add(new Category(
+                    rs.getInt("categoryID"),
+                    rs.getString("name"),
+                    rs.getString("description")
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return categories;
+    }
 }

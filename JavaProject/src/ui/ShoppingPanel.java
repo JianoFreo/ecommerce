@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import src.dao.CategoryDAO;
 import src.dao.OrderDAO;
 import src.dao.ProductDAO;
+import src.model.Category;
 import src.model.Order;
 import src.model.OrderItem;
 import src.model.Product;
@@ -17,15 +19,19 @@ public class ShoppingPanel extends JPanel {
     private JTable cartTable;
     private DefaultTableModel cartModel;
     private ProductDAO productDAO;
+    private CategoryDAO categoryDAO;
     private OrderDAO orderDAO;
     private User currentUser;
     private List<OrderItem> cart;
     private List<Product> productCache;
     private JLabel totalLabel;
+    private JTextField txtSearch;
+    private JComboBox<String> cmbCategory;
 
     public ShoppingPanel(User user) {
         this.currentUser = user;
         this.productDAO = new ProductDAO();
+        this.categoryDAO = new CategoryDAO();
         this.orderDAO = new OrderDAO();
         this.cart = new ArrayList<>();
         this.productCache = new ArrayList<>();
@@ -40,19 +46,11 @@ public class ShoppingPanel extends JPanel {
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBackground(new Color(245, 245, 245));
         
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(245, 245, 245));
-        JLabel title = new JLabel("🛍️ Products");
-        title.setFont(new Font("Arial", Font.BOLD, 16));
-        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JButton refresh = new JButton("Refresh");
-        refresh.addActionListener(e -> loadGrid());
-        JPanel refreshPanel = new JPanel();
-        refreshPanel.add(refresh);
-        headerPanel.add(title, BorderLayout.WEST);
-        headerPanel.add(refreshPanel, BorderLayout.EAST);
-        leftPanel.add(headerPanel, BorderLayout.NORTH);
+        // Top: Search Bar
+        JPanel searchPanel = createSearchPanel();
+        leftPanel.add(searchPanel, BorderLayout.NORTH);
 
+        // Product Grid
         gridPanel = new JPanel(new GridLayout(0, 3, 15, 15));
         gridPanel.setBackground(new Color(245, 245, 245));
         gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -82,6 +80,12 @@ public class ShoppingPanel extends JPanel {
         cartTable.setDefaultRenderer(Object.class, new CartImageRenderer());
         rightPanel.add(new JScrollPane(cartTable), BorderLayout.CENTER);
 
+        // Bottom: Discount and Checkout Panel
+        JPanel bottomRightPanel = new JPanel(new BorderLayout(10, 10));
+        bottomRightPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        bottomRightPanel.setBackground(Color.WHITE);
+
+        // Checkout buttons panel
         JPanel cartBottomPanel = new JPanel(new BorderLayout());
         JPanel cartButtonsLeft = new JPanel();
         JButton btnRemove = new JButton("Remove");
@@ -93,7 +97,7 @@ public class ShoppingPanel extends JPanel {
 
         JPanel cartButtonsRight = new JPanel(new BorderLayout(10, 0));
         totalLabel = new JLabel("Total: ₱0");
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalLabel.setForeground(new Color(200, 0, 0));
         JButton btnOrder = new JButton("Place Order");
         btnOrder.setFont(new Font("Arial", Font.BOLD, 12));
@@ -105,7 +109,9 @@ public class ShoppingPanel extends JPanel {
 
         cartBottomPanel.add(cartButtonsLeft, BorderLayout.WEST);
         cartBottomPanel.add(cartButtonsRight, BorderLayout.EAST);
-        rightPanel.add(cartBottomPanel, BorderLayout.SOUTH);
+        bottomRightPanel.add(cartBottomPanel, BorderLayout.SOUTH);
+        
+        rightPanel.add(bottomRightPanel, BorderLayout.SOUTH);
 
         split.setLeftComponent(leftPanel);
         split.setRightComponent(rightPanel);
@@ -379,7 +385,7 @@ public class ShoppingPanel extends JPanel {
             });
             total += item.getSubtotal();
         }
-        totalLabel.setText(String.format("Total: ₱%.0f", total));
+        totalLabel.setText("Total: ₱" + String.format("%.0f", total));
     }
 
     private class CartImageRenderer extends javax.swing.table.DefaultTableCellRenderer {
@@ -439,4 +445,111 @@ public class ShoppingPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Order failed!");
         }
     }
+
+    private JPanel createSearchPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(3, 5, 3, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Title
+        JLabel title = new JLabel("🛍️ Products");
+        title.setFont(new Font("Arial", Font.BOLD, 14));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        panel.add(title, gbc);
+
+        // Search box
+        gbc.gridx = 1;
+        gbc.weightx = 2;
+        txtSearch = new JTextField(20);
+        txtSearch.setToolTipText("Search products...");
+        panel.add(txtSearch, gbc);
+
+        JButton btnSearch = new JButton("🔎 Search");
+        btnSearch.addActionListener(e -> performSearch());
+        gbc.gridx = 2;
+        gbc.weightx = 0;
+        panel.add(btnSearch, gbc);
+
+        // Category filter
+        gbc.gridx = 3;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Category:"), gbc);
+
+        cmbCategory = new JComboBox<>();
+        cmbCategory.addItem("All Categories");
+        for (Category c : categoryDAO.getMainCategories()) {
+            cmbCategory.addItem(c.getName());
+        }
+        cmbCategory.addActionListener(e -> applyFilters());
+        gbc.gridx = 4;
+        gbc.weightx = 1;
+        panel.add(cmbCategory, gbc);
+
+        JButton btnRefresh = new JButton("🔄 Refresh");
+        btnRefresh.addActionListener(e -> {
+            txtSearch.setText("");
+            cmbCategory.setSelectedIndex(0);
+            loadGrid();
+        });
+        gbc.gridx = 5;
+        gbc.weightx = 0;
+        panel.add(btnRefresh, gbc);
+
+        return panel;
+    }
+
+    private void performSearch() {
+        String keyword = txtSearch.getText().trim().toLowerCase();
+        if (keyword.isEmpty()) {
+            loadGrid();
+            return;
+        }
+        List<Product> results = productCache.stream()
+            .filter(p -> p.getName().toLowerCase().contains(keyword) || 
+                        p.getDescription().toLowerCase().contains(keyword))
+            .toList();
+        displayProducts(results);
+    }
+
+    private void applyFilters() {
+        String keyword = txtSearch.getText().trim().toLowerCase();
+        Integer categoryID = null;
+        if (!cmbCategory.getSelectedItem().equals("All Categories")) {
+            for (Category c : categoryDAO.getMainCategories()) {
+                if (c.getName().equals(cmbCategory.getSelectedItem())) {
+                    categoryID = c.getCategoryID();
+                    break;
+                }
+            }
+        }
+
+        final Integer finalCategoryID = categoryID;
+        List<Product> results = productCache.stream()
+            .filter(p -> (keyword.isEmpty() || p.getName().toLowerCase().contains(keyword) || p.getDescription().toLowerCase().contains(keyword)) &&
+                        (finalCategoryID == null || p.getCategoryID() == finalCategoryID))
+            .toList();
+        displayProducts(results);
+    }
+
+    private void displayProducts(List<Product> products) {
+        gridPanel.removeAll();
+        productCache = new ArrayList<>(products);
+        for (Product p : products) {
+            gridPanel.add(createCard(p));
+        }
+        gridPanel.revalidate();
+        gridPanel.repaint();
+    }
+
+    private void updateTotal() {
+        double cartTotal = cart.stream().mapToDouble(OrderItem::getSubtotal).sum();
+        totalLabel.setText("Total: ₱" + String.format("%.0f", cartTotal));
+    }
 }
+
