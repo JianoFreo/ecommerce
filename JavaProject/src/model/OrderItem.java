@@ -8,7 +8,7 @@ public class OrderItem {
     private double price;
     private int quantity;
     private double subtotal;
-    private String imageUrl;
+    private byte[] imageData;
 
     // Default constructor
     public OrderItem() {}
@@ -84,11 +84,11 @@ public class OrderItem {
         this.subtotal = subtotal;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public byte[] getImageData() {
+        return imageData;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
     }
 }

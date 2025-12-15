@@ -3,7 +3,6 @@ package src.ui;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -11,7 +10,6 @@ import src.dao.CategoryDAO;
 import src.dao.ProductDAO;
 import src.model.Category;
 import src.model.Product;
-import src.util.ImageHelper;
 
 public class ProductManagementPanel extends JPanel {
     private JPanel gridPanel;
@@ -184,10 +182,9 @@ public class ProductManagementPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
 
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
+        if (p.getImageData() != null && p.getImageData().length > 0) {
             try {
-                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
-                ImageIcon icon = new ImageIcon(absolutePath);
+                ImageIcon icon = new ImageIcon(p.getImageData());
                 Image img = icon.getImage().getScaledInstance(210, 170, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
@@ -279,8 +276,14 @@ public class ProductManagementPanel extends JPanel {
             }
         }
         
-        selectedImagePath = p.getImageUrl();
-        lblImageStatus.setText(selectedImagePath != null ? "✓ " + new File(selectedImagePath).getName() : "No image");
+        // Store image data if available
+        if (p.getImageData() != null && p.getImageData().length > 0) {
+            selectedImagePath = "BINARY:" + java.util.Base64.getEncoder().encodeToString(p.getImageData());
+            lblImageStatus.setText("✓ Image loaded");
+        } else {
+            selectedImagePath = null;
+            lblImageStatus.setText("No image");
+        }
         calculateProfit();
         formPanel.scrollRectToVisible(formPanel.getBounds());
     }
@@ -301,17 +304,28 @@ public class ProductManagementPanel extends JPanel {
                 return;
             }
 
-            File imgFolder = new File("images");
-            if (!imgFolder.exists()) imgFolder.mkdir();
-
-            String fileName = System.currentTimeMillis() + "_" + src.getName();
-            File dest = new File(imgFolder, fileName);
-            Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            selectedImagePath = "images/" + fileName;
+            // Read image file bytes
+            byte[] imageBytes = Files.readAllBytes(src.toPath());
+            
+            // Store in selectedImagePath as bytes for database
+            // Using a marker to indicate this is binary data
+            selectedImagePath = "BINARY:" + java.util.Base64.getEncoder().encodeToString(imageBytes);
             lblImageStatus.setText("✓ " + src.getName());
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Upload failed: " + e.getMessage());
+        }
+    }
+    
+    // Helper method to extract image bytes from selectedImagePath
+    private byte[] getImageBytesFromSelectedPath() {
+        if (selectedImagePath == null || !selectedImagePath.startsWith("BINARY:")) {
+            return null;
+        }
+        try {
+            String base64 = selectedImagePath.substring(7); // Remove "BINARY:" prefix
+            return java.util.Base64.getDecoder().decode(base64);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -354,7 +368,7 @@ public class ProductManagementPanel extends JPanel {
                 Integer.parseInt(txtQty.getText().isEmpty() ? "0" : txtQty.getText()),
                 cat.getCategoryID()
             );
-            if (selectedImagePath != null) p.setImageUrl(selectedImagePath);
+            if (selectedImagePath != null) p.setImageData(getImageBytesFromSelectedPath());
 
             productDAO.addProduct(p);
             JOptionPane.showMessageDialog(this, "✓ Product added!");
@@ -384,7 +398,12 @@ public class ProductManagementPanel extends JPanel {
                 Integer.parseInt(txtQty.getText().isEmpty() ? "0" : txtQty.getText()),
                 cat.getCategoryID()
             );
-            if (selectedImagePath != null) p.setImageUrl(selectedImagePath);
+            // Use new image if uploaded, otherwise keep old image
+            if (selectedImagePath != null) {
+                p.setImageData(getImageBytesFromSelectedPath());
+            } else if (selectedProduct.getImageData() != null) {
+                p.setImageData(selectedProduct.getImageData());
+            }
 
             productDAO.updateProduct(p);
             JOptionPane.showMessageDialog(this, "✓ Product updated!");

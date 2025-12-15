@@ -11,7 +11,6 @@ import src.model.Order;
 import src.model.OrderItem;
 import src.model.Product;
 import src.model.User;
-import src.util.ImageHelper;
 
 public class ShoppingPanel extends JPanel {
     private JPanel gridPanel;
@@ -142,10 +141,9 @@ public class ShoppingPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
 
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
+        if (p.getImageData() != null && p.getImageData().length > 0) {
             try {
-                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
-                ImageIcon icon = new ImageIcon(absolutePath);
+                ImageIcon icon = new ImageIcon(p.getImageData());
                 Image img = icon.getImage().getScaledInstance(210, 210, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
@@ -239,10 +237,9 @@ public class ShoppingPanel extends JPanel {
         imgLabel.setHorizontalAlignment(JLabel.CENTER);
         imgLabel.setVerticalAlignment(JLabel.CENTER);
         
-        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && ImageHelper.imageExists(p.getImageUrl())) {
+        if (p.getImageData() != null && p.getImageData().length > 0) {
             try {
-                String absolutePath = ImageHelper.getAbsolutePath(p.getImageUrl());
-                ImageIcon icon = new ImageIcon(absolutePath);
+                ImageIcon icon = new ImageIcon(p.getImageData());
                 Image img = icon.getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
@@ -345,7 +342,7 @@ public class ShoppingPanel extends JPanel {
             }
             if (!found) {
                 OrderItem item = new OrderItem(0, 0, p.getId(), p.getName(), p.getPrice(), q);
-                item.setImageUrl(p.getImageUrl());
+                item.setImageData(p.getImageData());
                 cart.add(item);
             }
             updateCart();
@@ -374,7 +371,7 @@ public class ShoppingPanel extends JPanel {
         double total = 0;
         for (OrderItem item : cart) {
             cartModel.addRow(new Object[]{
-                item.getImageUrl(),
+                item.getImageData(),
                 item.getProductName(),
                 "₱" + String.format("%.0f", item.getPrice()),
                 item.getQuantity(),
@@ -392,16 +389,15 @@ public class ShoppingPanel extends JPanel {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setBackground(isSelected ? new Color(200, 220, 255) : Color.WHITE);
             
-            if (value != null && column == 0) {
-                String imageUrl = value.toString();
+            if (value != null && column == 0 && value instanceof byte[]) {
+                byte[] imageData = (byte[]) value;
                 JLabel imgLabel = new JLabel();
                 imgLabel.setHorizontalAlignment(JLabel.CENTER);
                 imgLabel.setVerticalAlignment(JLabel.CENTER);
                 
-                if (!imageUrl.isEmpty() && ImageHelper.imageExists(imageUrl)) {
+                if (imageData.length > 0) {
                     try {
-                        String absolutePath = ImageHelper.getAbsolutePath(imageUrl);
-                        ImageIcon icon = new ImageIcon(absolutePath);
+                        ImageIcon icon = new ImageIcon(imageData);
                         Image img = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
                         imgLabel.setIcon(new ImageIcon(img));
                     } catch (Exception e) {

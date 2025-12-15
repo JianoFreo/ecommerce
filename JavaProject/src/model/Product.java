@@ -9,7 +9,7 @@ public class Product { // Product class represents a product entity
     private int quantity; // Product quantity
     private int categoryID; // Foreign key to category
     private String categoryName; // Category name (for display)
-    private String imageUrl; // Image file path
+    private byte[] imageData; // Image binary data
 
     public Product() {} // Default constructor (empty product)
 
@@ -78,13 +78,13 @@ public class Product { // Product class represents a product entity
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-
     // Check if product is low in stock (less than 10 items)
     public boolean isLowStock() {
         return quantity < 10;
     }
+    
+    public byte[] getImageData() { return imageData; }
+    public void setImageData(byte[] imageData) { this.imageData = imageData; }
 
     @Override
     public String toString() {
