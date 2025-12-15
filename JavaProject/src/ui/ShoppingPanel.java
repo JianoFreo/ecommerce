@@ -21,6 +21,7 @@ public class ShoppingPanel extends JPanel {
     private OrderDAO orderDAO;
     private User currentUser;
     private List<OrderItem> cart;
+    private List<Product> productCache;
     private JLabel totalLabel;
 
     public ShoppingPanel(User user) {
@@ -28,6 +29,7 @@ public class ShoppingPanel extends JPanel {
         this.productDAO = new ProductDAO();
         this.orderDAO = new OrderDAO();
         this.cart = new ArrayList<>();
+        this.productCache = new ArrayList<>();
 
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(245, 245, 245));
@@ -69,13 +71,16 @@ public class ShoppingPanel extends JPanel {
         cartTitle.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(cartTitle, BorderLayout.NORTH);
 
-        String[] cols = {"Product", "Price", "Qty", "Subtotal"};
+        String[] cols = {"Image", "Product", "Price", "Qty", "Subtotal"};
         cartModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         cartTable = new JTable(cartModel);
-        cartTable.setRowHeight(25);
+        cartTable.setRowHeight(60);
+        cartTable.getColumnModel().getColumn(0).setPreferredWidth(60);
+        cartTable.getColumnModel().getColumn(1).setPreferredWidth(120);
+        cartTable.setDefaultRenderer(Object.class, new CartImageRenderer());
         rightPanel.add(new JScrollPane(cartTable), BorderLayout.CENTER);
 
         JPanel cartBottomPanel = new JPanel(new BorderLayout());
@@ -114,8 +119,8 @@ public class ShoppingPanel extends JPanel {
 
     private void loadGrid() {
         gridPanel.removeAll();
-        List<Product> products = productDAO.getAllProducts();
-        for (Product p : products) {
+        productCache = productDAO.getAllProducts();
+        for (Product p : productCache) {
             gridPanel.add(createCard(p));
         }
         gridPanel.revalidate();
@@ -228,7 +233,9 @@ public class ShoppingPanel extends JPanel {
                 }
             }
             if (!found) {
-                cart.add(new OrderItem(0, 0, p.getId(), p.getName(), p.getPrice(), q));
+                OrderItem item = new OrderItem(0, 0, p.getId(), p.getName(), p.getPrice(), q);
+                item.setImageUrl(p.getImageUrl());
+                cart.add(item);
             }
             updateCart();
         } catch (NumberFormatException ex) {
@@ -256,6 +263,7 @@ public class ShoppingPanel extends JPanel {
         double total = 0;
         for (OrderItem item : cart) {
             cartModel.addRow(new Object[]{
+                item.getImageUrl(),
                 item.getProductName(),
                 "₱" + String.format("%.0f", item.getPrice()),
                 item.getQuantity(),
@@ -264,6 +272,44 @@ public class ShoppingPanel extends JPanel {
             total += item.getSubtotal();
         }
         totalLabel.setText(String.format("Total: ₱%.0f", total));
+    }
+
+    private class CartImageRenderer extends javax.swing.table.DefaultTableCellRenderer {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBackground(isSelected ? new Color(200, 220, 255) : Color.WHITE);
+            
+            if (value != null && column == 0) {
+                String imageUrl = value.toString();
+                JLabel imgLabel = new JLabel();
+                imgLabel.setHorizontalAlignment(JLabel.CENTER);
+                imgLabel.setVerticalAlignment(JLabel.CENTER);
+                
+                if (!imageUrl.isEmpty() && new File(imageUrl).exists()) {
+                    try {
+                        ImageIcon icon = new ImageIcon(imageUrl);
+                        Image img = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                        imgLabel.setIcon(new ImageIcon(img));
+                    } catch (Exception e) {
+                        imgLabel.setText("📷");
+                        imgLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                    }
+                } else {
+                    imgLabel.setText("📷");
+                    imgLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                }
+                panel.add(imgLabel, BorderLayout.CENTER);
+                return panel;
+            }
+            
+            JLabel label = new JLabel(value != null ? value.toString() : "");
+            label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            label.setBackground(isSelected ? new Color(200, 220, 255) : Color.WHITE);
+            label.setOpaque(true);
+            return label;
+        }
     }
 
     private void checkout() {

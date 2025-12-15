@@ -62,61 +62,91 @@ public class ProductManagementPanel extends JPanel {
 
     private JPanel createFormPanel() {
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(5, 4, 5, 5));
+        panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("➕ Add/Edit Product"));
         panel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        txtName = new JTextField();
-        txtDesc = new JTextField();
-        txtCostPrice = new JTextField();
-        txtPrice = new JTextField();
-        txtQty = new JTextField();
+        txtName = new JTextField(15);
+        txtDesc = new JTextField(15);
+        txtCostPrice = new JTextField(10);
+        txtPrice = new JTextField(10);
+        txtQty = new JTextField(10);
         cmbCategory = new JComboBox<>();
         loadCategories();
 
-        panel.add(new JLabel("Name:"));
-        panel.add(txtName);
-        panel.add(new JLabel("Description:"));
-        panel.add(txtDesc);
+        // Row 0: Name, Description
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
+        panel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        panel.add(txtName, gbc);
+        gbc.gridx = 2; gbc.weightx = 0;
+        panel.add(new JLabel("Description:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1;
+        panel.add(txtDesc, gbc);
 
-        panel.add(new JLabel("Cost Price:"));
-        panel.add(txtCostPrice);
-        panel.add(new JLabel("Selling Price:"));
-        panel.add(txtPrice);
+        // Row 1: Cost Price, Selling Price
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        panel.add(new JLabel("Cost Price:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        panel.add(txtCostPrice, gbc);
+        gbc.gridx = 2; gbc.weightx = 0;
+        panel.add(new JLabel("Selling Price:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1;
+        panel.add(txtPrice, gbc);
 
-        panel.add(new JLabel("Profit:"));
+        // Row 2: Profit, Quantity
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
+        panel.add(new JLabel("Profit:"), gbc);
         lblProfit = new JLabel("₱0.00");
         lblProfit.setFont(new Font("Arial", Font.BOLD, 12));
         lblProfit.setForeground(new Color(0, 150, 0));
-        panel.add(lblProfit);
-        panel.add(new JLabel("Quantity:"));
-        panel.add(txtQty);
+        gbc.gridx = 1; gbc.weightx = 1;
+        panel.add(lblProfit, gbc);
+        gbc.gridx = 2; gbc.weightx = 0;
+        panel.add(new JLabel("Quantity:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1;
+        panel.add(txtQty, gbc);
 
-        panel.add(new JLabel("Category:"));
-        panel.add(cmbCategory);
-        panel.add(new JLabel("Image:"));
+        // Row 3: Category, Browse Button
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
+        panel.add(new JLabel("Category:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        panel.add(cmbCategory, gbc);
+        gbc.gridx = 2; gbc.weightx = 0;
+        panel.add(new JLabel("Image:"), gbc);
         JButton btnBrowse = new JButton("📁 Browse");
         btnBrowse.addActionListener(e -> browseImage());
-        panel.add(btnBrowse);
+        gbc.gridx = 3; gbc.weightx = 1;
+        panel.add(btnBrowse, gbc);
 
+        // Row 4: Image Status
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0;
+        panel.add(new JLabel("Status:"), gbc);
         lblImageStatus = new JLabel("No image selected");
         lblImageStatus.setFont(new Font("Arial", Font.PLAIN, 10));
-        panel.add(lblImageStatus);
-        panel.add(new JLabel(""));
+        gbc.gridx = 1; gbc.gridwidth = 3; gbc.weightx = 1;
+        panel.add(lblImageStatus, gbc);
+        gbc.gridwidth = 1;
 
-        // Buttons
+        // Row 5: Buttons
+        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0;
         JButton btnAdd = new JButton("➕ Add");
-        JButton btnUpdate = new JButton("✏️ Update");
-        JButton btnClear = new JButton("Clear");
-        
         btnAdd.addActionListener(e -> addProduct());
-        btnUpdate.addActionListener(e -> updateProduct());
-        btnClear.addActionListener(e -> clearForm());
+        panel.add(btnAdd, gbc);
 
-        panel.add(btnAdd);
-        panel.add(btnUpdate);
-        panel.add(btnClear);
-        panel.add(new JLabel(""));
+        gbc.gridx = 1; gbc.weightx = 0;
+        JButton btnUpdate = new JButton("✏️ Update");
+        btnUpdate.addActionListener(e -> updateProduct());
+        panel.add(btnUpdate, gbc);
+
+        gbc.gridx = 2; gbc.weightx = 0;
+        JButton btnClear = new JButton("Clear");
+        btnClear.addActionListener(e -> clearForm());
+        panel.add(btnClear, gbc);
 
         txtPrice.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent e) { calculateProfit(); }
