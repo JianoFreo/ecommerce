@@ -173,10 +173,10 @@ public class ShoppingPanel extends JPanel {
         priceLabel.setForeground(new Color(200, 0, 0));
         priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        String stock = p.getQuantity() > 0 ? "✓ In Stock" : "✗ Out";
+        String stock = p.getQuantity() > 0 ? "✓ Stock: " + p.getQuantity() : "✗ Out of Stock";
         Color stockCol = p.getQuantity() > 0 ? new Color(0, 150, 0) : Color.RED;
         JLabel stockLabel = new JLabel(stock);
-        stockLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        stockLabel.setFont(new Font("Arial", Font.BOLD, 11));
         stockLabel.setForeground(stockCol);
         stockLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -186,14 +186,24 @@ public class ShoppingPanel extends JPanel {
         infoPanel.add(Box.createVerticalStrut(3));
         infoPanel.add(stockLabel);
 
-        // Button
-        JButton btnCart = new JButton("Add to Cart");
-        btnCart.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnCart.setMaximumSize(new Dimension(200, 30));
+        // Buttons Panel
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        btnPanel.setMaximumSize(new Dimension(200, 40));
+        btnPanel.setBackground(Color.WHITE);
+        
+        JButton btnDetails = new JButton("ℹ️ Details");
+        btnDetails.setFont(new Font("Arial", Font.PLAIN, 10));
+        btnDetails.addActionListener(e -> showDetails(p));
+        btnPanel.add(btnDetails);
+        
+        JButton btnCart = new JButton("🛒 Add");
+        btnCart.setFont(new Font("Arial", Font.PLAIN, 10));
         btnCart.setEnabled(p.getQuantity() > 0);
         btnCart.addActionListener(e -> addToCart(p));
+        btnPanel.add(btnCart);
+        
         infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(btnCart);
+        infoPanel.add(btnPanel);
 
         card.add(infoPanel, BorderLayout.CENTER);
 
@@ -207,6 +217,105 @@ public class ShoppingPanel extends JPanel {
         });
 
         return card;
+    }
+
+    private void showDetails(Product p) {
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Product Details - " + p.getName());
+        dialog.setSize(500, 400);
+        dialog.setLocationRelativeTo(this);
+        dialog.setModal(true);
+        
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        panel.setBackground(Color.WHITE);
+        
+        // Image
+        JPanel imgPanel = new JPanel(new BorderLayout());
+        imgPanel.setBackground(new Color(240, 240, 240));
+        imgPanel.setPreferredSize(new Dimension(150, 150));
+        JLabel imgLabel = new JLabel();
+        imgLabel.setHorizontalAlignment(JLabel.CENTER);
+        imgLabel.setVerticalAlignment(JLabel.CENTER);
+        
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty() && new File(p.getImageUrl()).exists()) {
+            try {
+                ImageIcon icon = new ImageIcon(p.getImageUrl());
+                Image img = icon.getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH);
+                imgLabel.setIcon(new ImageIcon(img));
+            } catch (Exception e) {
+                imgLabel.setText("📷");
+                imgLabel.setFont(new Font("Arial", Font.BOLD, 50));
+            }
+        } else {
+            imgLabel.setText("📷");
+            imgLabel.setFont(new Font("Arial", Font.BOLD, 50));
+        }
+        imgPanel.add(imgLabel, BorderLayout.CENTER);
+        panel.add(imgPanel, BorderLayout.WEST);
+        
+        // Details
+        JPanel detailsPanel = new JPanel();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+        detailsPanel.setBackground(Color.WHITE);
+        
+        JLabel nameLabel = new JLabel("Product: " + p.getName());
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        detailsPanel.add(nameLabel);
+        detailsPanel.add(Box.createVerticalStrut(10));
+        
+        JLabel categoryLabel = new JLabel("Category: " + (p.getCategoryName() != null ? p.getCategoryName() : "N/A"));
+        categoryLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        detailsPanel.add(categoryLabel);
+        detailsPanel.add(Box.createVerticalStrut(5));
+        
+        JLabel priceLabel = new JLabel("Price: ₱" + String.format("%.2f", p.getPrice()));
+        priceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        priceLabel.setForeground(new Color(200, 0, 0));
+        detailsPanel.add(priceLabel);
+        detailsPanel.add(Box.createVerticalStrut(5));
+        
+        String stockStatus = p.getQuantity() > 0 ? "✓ In Stock: " + p.getQuantity() + " units" : "✗ Out of Stock";
+        Color stockColor = p.getQuantity() > 0 ? new Color(0, 150, 0) : Color.RED;
+        JLabel stockLabel = new JLabel(stockStatus);
+        stockLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        stockLabel.setForeground(stockColor);
+        detailsPanel.add(stockLabel);
+        detailsPanel.add(Box.createVerticalStrut(10));
+        
+        JLabel descLabel = new JLabel("Description:");
+        descLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        detailsPanel.add(descLabel);
+        
+        String desc = p.getDescription() != null && !p.getDescription().isEmpty() ? p.getDescription() : "No description available";
+        JTextArea descArea = new JTextArea(desc);
+        descArea.setFont(new Font("Arial", Font.PLAIN, 11));
+        descArea.setLineWrap(true);
+        descArea.setWrapStyleWord(true);
+        descArea.setEditable(false);
+        descArea.setBackground(new Color(245, 245, 245));
+        JScrollPane descScroll = new JScrollPane(descArea);
+        descScroll.setPreferredSize(new Dimension(300, 100));
+        detailsPanel.add(descScroll);
+        
+        panel.add(detailsPanel, BorderLayout.CENTER);
+        
+        // Button
+        JPanel btnPanel = new JPanel();
+        JButton btnClose = new JButton("Close");
+        btnClose.addActionListener(e -> dialog.dispose());
+        JButton btnAddCart = new JButton("🛒 Add to Cart");
+        btnAddCart.setEnabled(p.getQuantity() > 0);
+        btnAddCart.addActionListener(e -> {
+            addToCart(p);
+            dialog.dispose();
+        });
+        btnPanel.add(btnAddCart);
+        btnPanel.add(btnClose);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        
+        dialog.add(panel);
+        dialog.setVisible(true);
     }
 
     private void addToCart(Product p) {
