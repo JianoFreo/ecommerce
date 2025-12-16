@@ -16,4 +16,4 @@ public class Main { // Main class, program entry point
 ├── model/     → defines data objects or entities (like Product, user, order, real world)
 └── ui/        → handles user interface (the visual part, like forms & buttons)
  * 
- */
+ */ 
