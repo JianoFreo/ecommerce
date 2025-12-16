@@ -1,11 +1,11 @@
 package src.ui;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import src.dao.DiscountCodeDAO;
 import src.model.DiscountCode;
 
@@ -26,7 +26,7 @@ public class AdminCouponPanel extends JPanel {
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        setBackground(new Color(245, 245, 245));
+        setBackground(new Color(200, 220, 240));
 
         // Top: Header
         JLabel header = new JLabel("🎟️ Coupon & Discount Management");

@@ -1,11 +1,11 @@
 package src.ui;
 
-import src.dao.ReviewDAO;
-import src.model.Review;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.*;
+import src.dao.ReviewDAO;
+import src.model.Review;
 
 public class ReviewManagementPanel extends JPanel {
     private JTable table;
@@ -17,6 +17,7 @@ public class ReviewManagementPanel extends JPanel {
         
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(200, 220, 240));
 
         JLabel header = new JLabel("Review Management");
         header.setFont(new Font("Arial", Font.BOLD, 20));

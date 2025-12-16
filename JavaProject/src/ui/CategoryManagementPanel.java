@@ -1,12 +1,12 @@
 package src.ui;
 
-import src.dao.CategoryDAO;
-import src.model.Category;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.*;
+import src.dao.CategoryDAO;
+import src.model.Category;
 
 public class CategoryManagementPanel extends JPanel {
     private JTable table;
@@ -19,6 +19,7 @@ public class CategoryManagementPanel extends JPanel {
         
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(200, 220, 240));
 
         // Header
         JLabel header = new JLabel("Category Management");

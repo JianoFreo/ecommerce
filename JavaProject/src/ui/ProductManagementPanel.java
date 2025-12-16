@@ -3,6 +3,7 @@ package src.ui;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -18,6 +19,7 @@ public class ProductManagementPanel extends JPanel {
     private JTextField txtSearch;
     private JComboBox<Category> cmbCategory;
     private JComboBox<String> cmbFilterCategory;
+    private JComboBox<String> cmbSortBy;
     private JLabel lblProfit, lblImageStatus;
     private ProductDAO productDAO;
     private CategoryDAO categoryDAO;
@@ -31,7 +33,7 @@ public class ProductManagementPanel extends JPanel {
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        setBackground(new Color(245, 245, 245));
+        setBackground(new Color(200, 220, 240));
 
         // Top: Header + Search/Filter
         JPanel topPanel = createTopPanel();
@@ -42,11 +44,11 @@ public class ProductManagementPanel extends JPanel {
         
         JPanel gridPanel_wrapper = new JPanel(new BorderLayout());
         gridPanel = new JPanel(new GridLayout(0, 3, 15, 15));
-        gridPanel.setBackground(new Color(245, 245, 245));
-        gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        gridPanel.setBackground(new Color(15, 30, 60));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
         JScrollPane gridScroll = new JScrollPane(gridPanel);
-        gridScroll.setBackground(new Color(245, 245, 245));
-        gridScroll.getViewport().setBackground(new Color(245, 245, 245));
+        gridScroll.setBackground(new Color(15, 30, 60));
+        gridScroll.getViewport().setBackground(new Color(15, 30, 60));
         gridPanel_wrapper.add(gridScroll, BorderLayout.CENTER);
         
         formPanel = createFormPanel();
@@ -309,6 +311,12 @@ public class ProductManagementPanel extends JPanel {
         JButton btnDelete = new JButton("🗑️ Delete");
         btnEdit.setFont(new Font("Arial", Font.PLAIN, 11));
         btnDelete.setFont(new Font("Arial", Font.PLAIN, 11));
+        btnEdit.setBackground(new Color(66, 133, 244));
+        btnEdit.setForeground(Color.WHITE);
+        btnEdit.setFocusPainted(false);
+        btnDelete.setBackground(new Color(229, 57, 53));
+        btnDelete.setForeground(Color.WHITE);
+        btnDelete.setFocusPainted(false);
         btnEdit.addActionListener(e -> selectProduct(p));
         btnDelete.addActionListener(e -> deleteProduct(p));
         btnPanel.add(btnEdit);
@@ -582,6 +590,15 @@ public class ProductManagementPanel extends JPanel {
         gbc.weightx = 1;
         searchPanel.add(cmbFilterCategory, gbc);
 
+        // Sort dropdown
+        gbc.gridx = 5;
+        searchPanel.add(new JLabel("Sort:"), gbc);
+        cmbSortBy = new JComboBox<>(new String[]{"Default", "Price ↑", "Price ↓", "Name (A-Z)", "Stock ↑", "Stock ↓"});
+        cmbSortBy.addActionListener(e -> applyAdminFilters());
+        gbc.gridx = 6;
+        gbc.weightx = 1;
+        searchPanel.add(cmbSortBy, gbc);
+
         panel.add(searchPanel, BorderLayout.CENTER);
 
         // Right: Refresh button
@@ -631,7 +648,28 @@ public class ProductManagementPanel extends JPanel {
             .filter(p -> (keyword.isEmpty() || p.getName().toLowerCase().contains(keyword) || p.getDescription().toLowerCase().contains(keyword)) &&
                         (finalCategoryID == null || p.getCategoryID() == finalCategoryID))
             .toList();
-        displayProducts(results);
+        
+        // Apply sorting
+        String sortOption = (String) cmbSortBy.getSelectedItem();
+        List<Product> sorted = applySorting(new ArrayList<>(results), sortOption);
+        displayProducts(sorted);
+    }
+
+    private List<Product> applySorting(List<Product> products, String sortOption) {
+        switch (sortOption) {
+            case "Price ↑":
+                return products.stream().sorted((a, b) -> Double.compare(a.getPrice(), b.getPrice())).toList();
+            case "Price ↓":
+                return products.stream().sorted((a, b) -> Double.compare(b.getPrice(), a.getPrice())).toList();
+            case "Name (A-Z)":
+                return products.stream().sorted((a, b) -> a.getName().compareTo(b.getName())).toList();
+            case "Stock ↑":
+                return products.stream().sorted((a, b) -> Integer.compare(a.getQuantity(), b.getQuantity())).toList();
+            case "Stock ↓":
+                return products.stream().sorted((a, b) -> Integer.compare(b.getQuantity(), a.getQuantity())).toList();
+            default:
+                return products;
+        }
     }
 
     private void displayProducts(List<Product> products) {

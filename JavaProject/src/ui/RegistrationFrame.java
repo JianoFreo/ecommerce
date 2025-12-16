@@ -1,9 +1,9 @@
 package src.ui;
 
+import java.awt.*;
+import javax.swing.*;
 import src.dao.UserDAO;
 import src.model.User;
-import javax.swing.*;
-import java.awt.*;
 
 public class RegistrationFrame extends JFrame {
     private JTextField txtName, txtEmail, txtAddress, txtPhone;
@@ -28,6 +28,8 @@ public class RegistrationFrame extends JFrame {
 
         // Form Panel
         JPanel formPanel = new JPanel(new GridLayout(7, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        formPanel.setBackground(new Color(200, 220, 240));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         txtName = new JTextField();

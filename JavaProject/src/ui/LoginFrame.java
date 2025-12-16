@@ -19,6 +19,7 @@ public class LoginFrame extends JFrame {
         // Login Panel
         JPanel loginPanel = new JPanel(new GridLayout(3, 2, 5, 5));
         loginPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        loginPanel.setBackground(new Color(200, 220, 240));
         
         loginPanel.add(new JLabel("Email:"));
         txtUser = new JTextField();

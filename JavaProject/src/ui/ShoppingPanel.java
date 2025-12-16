@@ -27,9 +27,11 @@ public class ShoppingPanel extends JPanel {
     private User currentUser;
     private List<OrderItem> cart;
     private List<Product> productCache;
+    private List<Product> allProductsCache;
     private JLabel totalLabel;
     private JTextField txtSearch;
     private JComboBox<String> cmbCategory;
+    private JComboBox<String> cmbSortBy;
     private double discountAmount = 0;
 
     public ShoppingPanel(User user) {
@@ -42,14 +44,14 @@ public class ShoppingPanel extends JPanel {
         this.productCache = new ArrayList<>();
 
         setLayout(new BorderLayout(10, 10));
-        setBackground(new Color(245, 245, 245));
+        setBackground(new Color(200, 220, 240));
 
         // Split: Grid left, Cart right
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
         // Left: Product Grid
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setBackground(new Color(245, 245, 245));
+        leftPanel.setBackground(new Color(15, 30, 60));
         
         // Top: Search Bar
         JPanel searchPanel = createSearchPanel();
@@ -57,11 +59,11 @@ public class ShoppingPanel extends JPanel {
 
         // Product Grid
         gridPanel = new JPanel(new GridLayout(0, 3, 15, 15));
-        gridPanel.setBackground(new Color(245, 245, 245));
-        gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        gridPanel.setBackground(new Color(15, 30, 60));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 15));
         JScrollPane gridScroll = new JScrollPane(gridPanel);
-        gridScroll.setBackground(new Color(245, 245, 245));
-        gridScroll.getViewport().setBackground(new Color(245, 245, 245));
+        gridScroll.setBackground(new Color(15, 30, 60));
+        gridScroll.getViewport().setBackground(new Color(15, 30, 60));
         leftPanel.add(gridScroll, BorderLayout.CENTER);
 
         // Right: Shopping Cart
@@ -97,6 +99,9 @@ public class ShoppingPanel extends JPanel {
         JLabel discountLabel = new JLabel("Coupon Code:");
         JTextField txtCoupon = new JTextField(12);
         JButton btnApply = new JButton("Apply");
+        btnApply.setBackground(new Color(66, 133, 244));
+        btnApply.setForeground(Color.WHITE);
+        btnApply.setFocusPainted(false);
         JLabel statusLabel = new JLabel("");
         discountPanel.add(discountLabel);
         discountPanel.add(txtCoupon);
@@ -131,6 +136,12 @@ public class ShoppingPanel extends JPanel {
         JPanel cartButtonsLeft = new JPanel();
         JButton btnRemove = new JButton("Remove");
         JButton btnClear = new JButton("Clear");
+        btnRemove.setBackground(new Color(66, 133, 244));
+        btnRemove.setForeground(Color.WHITE);
+        btnClear.setBackground(new Color(66, 133, 244));
+        btnClear.setForeground(Color.WHITE);
+        btnRemove.setFocusPainted(false);
+        btnClear.setFocusPainted(false);
         btnRemove.addActionListener(e -> removeCart());
         btnClear.addActionListener(e -> clearCart());
         cartButtonsLeft.add(btnRemove);
@@ -139,10 +150,10 @@ public class ShoppingPanel extends JPanel {
         JPanel cartButtonsRight = new JPanel(new BorderLayout(10, 0));
         totalLabel = new JLabel("Total: ₱0");
         totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        totalLabel.setForeground(new Color(200, 0, 0));
+        totalLabel.setForeground(new Color(76, 175, 80));
         JButton btnOrder = new JButton("Place Order");
         btnOrder.setFont(new Font("Arial", Font.BOLD, 12));
-        btnOrder.setBackground(new Color(255, 153, 0));
+        btnOrder.setBackground(new Color(25, 118, 210));
         btnOrder.setForeground(Color.WHITE);
         btnOrder.addActionListener(e -> checkout());
         cartButtonsRight.add(totalLabel, BorderLayout.WEST);
@@ -165,7 +176,8 @@ public class ShoppingPanel extends JPanel {
 
     private void loadGrid() {
         gridPanel.removeAll();
-        productCache = productDAO.getAllProducts();
+        allProductsCache = productDAO.getAllProducts();
+        productCache = new ArrayList<>(allProductsCache);
         for (Product p : productCache) {
             gridPanel.add(createCard(p));
         }
@@ -249,11 +261,17 @@ public class ShoppingPanel extends JPanel {
         
         JButton btnDetails = new JButton("ℹ️ Details");
         btnDetails.setFont(new Font("Arial", Font.PLAIN, 10));
+        btnDetails.setBackground(new Color(66, 133, 244));
+        btnDetails.setForeground(Color.WHITE);
+        btnDetails.setFocusPainted(false);
         btnDetails.addActionListener(e -> showDetails(p));
         btnPanel.add(btnDetails);
         
         JButton btnCart = new JButton("🛒 Add");
         btnCart.setFont(new Font("Arial", Font.PLAIN, 10));
+        btnCart.setBackground(new Color(76, 175, 80));
+        btnCart.setForeground(Color.WHITE);
+        btnCart.setFocusPainted(false);
         btnCart.setEnabled(p.getQuantity() > 0);
         btnCart.addActionListener(e -> addToCart(p));
         btnPanel.add(btnCart);
@@ -502,11 +520,13 @@ public class ShoppingPanel extends JPanel {
         String addr = JOptionPane.showInputDialog(this, "Address:", currentUser.getAddress());
         if (addr == null || addr.isEmpty()) return;
         double total = cart.stream().mapToDouble(OrderItem::getSubtotal).sum();
-        Order order = new Order(0, currentUser.getUserID(), null, "Pending", total, addr);
+        double finalTotal = total - discountAmount; // Apply discount
+        Order order = new Order(0, currentUser.getUserID(), null, "Pending", finalTotal, addr);
         order.setItems(new ArrayList<>(cart));
         if (orderDAO.createOrder(order)) {
-            JOptionPane.showMessageDialog(this, "Order placed! Total: ₱" + String.format("%.0f", total));
+            JOptionPane.showMessageDialog(this, "Order placed! Total: ₱" + String.format("%.0f", finalTotal));
             cart.clear();
+            discountAmount = 0; // Reset discount after checkout
             updateCart();
             loadGrid();
         } else {
@@ -559,13 +579,23 @@ public class ShoppingPanel extends JPanel {
         gbc.weightx = 1;
         panel.add(cmbCategory, gbc);
 
+        // Sort dropdown
+        gbc.gridx = 5;
+        panel.add(new JLabel("Sort:"), gbc);
+        cmbSortBy = new JComboBox<>(new String[]{"Default", "Price ↑", "Price ↓", "Name (A-Z)", "Stock ↑", "Stock ↓"});
+        cmbSortBy.addActionListener(e -> applyFilters());
+        gbc.gridx = 6;
+        gbc.weightx = 1;
+        panel.add(cmbSortBy, gbc);
+
         JButton btnRefresh = new JButton("🔄 Refresh");
         btnRefresh.addActionListener(e -> {
             txtSearch.setText("");
             cmbCategory.setSelectedIndex(0);
+            cmbSortBy.setSelectedIndex(0);
             loadGrid();
         });
-        gbc.gridx = 5;
+        gbc.gridx = 7;
         gbc.weightx = 0;
         panel.add(btnRefresh, gbc);
 
@@ -587,10 +617,12 @@ public class ShoppingPanel extends JPanel {
 
     private void applyFilters() {
         String keyword = txtSearch.getText().trim().toLowerCase();
+        String selectedCategory = (String) cmbCategory.getSelectedItem();
+        
         Integer categoryID = null;
-        if (!cmbCategory.getSelectedItem().equals("All Categories")) {
+        if (!selectedCategory.equals("All Categories")) {
             for (Category c : categoryDAO.getMainCategories()) {
-                if (c.getName().equals(cmbCategory.getSelectedItem())) {
+                if (c.getName().equals(selectedCategory)) {
                     categoryID = c.getCategoryID();
                     break;
                 }
@@ -598,11 +630,32 @@ public class ShoppingPanel extends JPanel {
         }
 
         final Integer finalCategoryID = categoryID;
-        List<Product> results = productCache.stream()
+        List<Product> results = allProductsCache.stream()
             .filter(p -> (keyword.isEmpty() || p.getName().toLowerCase().contains(keyword) || p.getDescription().toLowerCase().contains(keyword)) &&
                         (finalCategoryID == null || p.getCategoryID() == finalCategoryID))
             .toList();
-        displayProducts(results);
+        
+        // Apply sorting
+        String sortOption = (String) cmbSortBy.getSelectedItem();
+        List<Product> sorted = applySorting(new ArrayList<>(results), sortOption);
+        displayProducts(sorted);
+    }
+
+    private List<Product> applySorting(List<Product> products, String sortOption) {
+        switch (sortOption) {
+            case "Price ↑":
+                return products.stream().sorted((a, b) -> Double.compare(a.getPrice(), b.getPrice())).toList();
+            case "Price ↓":
+                return products.stream().sorted((a, b) -> Double.compare(b.getPrice(), a.getPrice())).toList();
+            case "Name (A-Z)":
+                return products.stream().sorted((a, b) -> a.getName().compareTo(b.getName())).toList();
+            case "Stock ↑":
+                return products.stream().sorted((a, b) -> Integer.compare(a.getQuantity(), b.getQuantity())).toList();
+            case "Stock ↓":
+                return products.stream().sorted((a, b) -> Integer.compare(b.getQuantity(), a.getQuantity())).toList();
+            default:
+                return products;
+        }
     }
 
     private void displayProducts(List<Product> products) {
