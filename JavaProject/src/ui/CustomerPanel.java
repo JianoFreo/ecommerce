@@ -14,7 +14,7 @@ public class CustomerPanel extends JPanel {
 
         // Tabbed Pane for customer features
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.addTab("Shop", new ShoppingPanel(user));
+        tabbedPane.addTab("Shop", new ShoppingPanelNew(user));
         tabbedPane.addTab("My Profile", new CustomerProfilePanel(user));
         tabbedPane.addTab("My Orders", new OrderHistoryPanel(user));
         

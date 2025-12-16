@@ -10,22 +10,42 @@ public class MainMenuFrame extends JFrame {
     public MainMenuFrame(User user) {
         this.currentUser = user;
         
-        setTitle("E-Commerce Product Management");
-        setSize(1200, 700);
+        setTitle("JianoFreoTech - E-Commerce");
+        setSize(1400, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
         // Top Navigation Panel
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        navPanel.setBackground(new Color(240, 240, 240));
-        JLabel navLabel = new JLabel("Navigation");
-        navLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        navPanel.add(navLabel);
-        navPanel.add(Box.createHorizontalStrut(20));
-        JLabel accountLabel = new JLabel("Account");
-        accountLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        navPanel.add(accountLabel);
+        JPanel navPanel = new JPanel(new BorderLayout());
+        navPanel.setBackground(Color.WHITE);
+        navPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 225)));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+
+        JLabel titleLabel = new JLabel("JianoFreoTech");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(60, 60, 80));
+        navPanel.add(titleLabel, BorderLayout.WEST);
+
+        JPanel rightNav = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
+        rightNav.setBackground(Color.WHITE);
+        
+        JLabel userLabel = new JLabel(user.getName() + " (" + user.getRole() + ")");
+        userLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        userLabel.setForeground(new Color(100, 100, 110));
+        rightNav.add(userLabel);
+
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.setFont(new Font("Arial", Font.PLAIN, 11));
+        btnLogout.setBackground(new Color(229, 57, 53));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setFocusPainted(false);
+        btnLogout.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        btnLogout.addActionListener(e -> logout());
+        rightNav.add(btnLogout);
+
+        navPanel.add(rightNav, BorderLayout.EAST);
         add(navPanel, BorderLayout.NORTH);
 
         // Content Panel based on user role
@@ -34,14 +54,6 @@ public class MainMenuFrame extends JFrame {
         } else {
             add(new CustomerPanel(currentUser), BorderLayout.CENTER);
         }
-
-        // Footer with logout
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JButton btnLogout = new JButton("Logout");
-        btnLogout.addActionListener(e -> logout());
-        footerPanel.add(btnLogout);
-        add(footerPanel, BorderLayout.SOUTH);
 
         setVisible(true);
     }
