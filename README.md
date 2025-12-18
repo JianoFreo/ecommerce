@@ -1,3 +1,14 @@
+## ADMIN INTERFACE
+<p align="center">
+  <img src="assets/admin.png" width="500">
+</p>
+
+## USER INTERFACE
+<p align="center">
+  <img src="assets/user.png" width="500">
+</p>
+
+
 # Project Summary - E-Commerce CRUD Application
 
 
