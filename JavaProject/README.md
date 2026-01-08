@@ -115,7 +115,7 @@ JavaProject/
 
 ---
 
-## 🔧 Technical Details
+##  Technical Details
 
 ### Technologies Used
 - **Language:** Java 8+
