@@ -44,29 +44,6 @@ java -cp "bin;lib/*" src.Main
 
 ---
 
-## Testing Checklist
-
-- [ ] Application starts without errors
-- [ ] Admin can click " Browse" button
-- [ ] File picker opens (Windows native dialog)
-- [ ] Can select image file (jpg, png, etc)
-- [ ] After selection, status shows "✓ filename"
-- [ ] Can add product with image
-- [ ] Check database: `SELECT * FROM products WHERE id=[new_product_id]`
-  - Verify: imageUrl column has path like `images/1765810267119_filename`
-- [ ] Check file system: `images/` folder has copied image file
-- [ ] Customer logs in and browses products
-- [ ] Product images display in grid (not 📷 emoji)
-- [ ] Product cards have: Image, name, ₱price, stock, Add to Cart button
-- [ ] Hover effect works (blue border)
-- [ ] Can add products to cart
-- [ ] Cart shows totals correctly
-- [ ] Can place order successfully
-
----
-
----
-
 ## Notes
 
 1. **Image Paths**: Stored as relative paths (e.g., `images/file.jpg`) for portability
